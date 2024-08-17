@@ -41,16 +41,20 @@ public class ScaleManager : MonoBehaviour
                 blocks.Add(Physics.OverlapSphere(scale.transform.position, 0.2f, LayerMask.GetMask("Block"))[0].transform.parent);
             }
 
-            foreach (GameObject floor in floors)
+            for (int f = 0; f < floors.Count; f++)
             {
-                Collider[] c = Physics.OverlapSphere(floor.transform.position, 0.2f, LayerMask.GetMask("Block"));
+                Collider[] c = Physics.OverlapSphere(floors[f].transform.position, 0.2f, LayerMask.GetMask("Block"));
                 if (c.Length > 0)
                 {
                     if (blocks.Contains(c[0].transform.parent))
                     {
-                        floor.name = "Scale";
-                        floor.tag = "Scale";
-                        floor.GetComponent<Renderer>().material = scaleMat;
+                        floors[f].name = "Scale";
+                        floors[f].tag = "Scale";
+                        floors[f].GetComponent<Renderer>().material = scaleMat;
+
+                        scales.Add(floors[f]);
+                        floors.RemoveAt(f);
+                        f--;
                     }
                 }
             }
@@ -61,7 +65,7 @@ public class ScaleManager : MonoBehaviour
                 Destroy(block.gameObject);
             }
 
-            scales = GameObject.FindGameObjectsWithTag("Scale").ToList();
+            
         }
 
         Invoke("CheckForWin", 1f);
