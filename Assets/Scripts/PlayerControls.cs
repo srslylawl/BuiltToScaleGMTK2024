@@ -1,251 +1,300 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
-using static UnityEditor.FilePathAttribute;
 
-public class PlayerControls : MonoBehaviour
-{
+public class PlayerControls : MonoBehaviour, IGridOccupant {
+	public float movementSpeed = 5f;
+	public float rotationSpeed = 180f;
+	private bool rotatingRight = true;
+	private bool rememberSpace = false;
+	// public Transform playerDestinationPoint;
+	private Transform block = null;
+	private Transform holdingBlock;
+	public LayerMask layermask;
 
-    public float movementSpeed = 5f;
-    public float rotationSpeed = 180f;
-    private bool rotatingRight = true;
-    private bool rememberSpace = false;
-    public Transform playerDestinationPoint;
-    private Transform block = null;
-    private Transform holdingBlock;
-    public LayerMask layermask;
+	private int[,] playerBlockLayout = new int[7, 7];
 
-    private int[,] playerBlockLayout = new int[7, 7];
-    private Vector3 nextLocation;
+	
+	public Vector2Int CurrentPosition { get; set; }//where we actually are on the grid
+	private Vector2Int interpolationOrigin; //where we are interpolating from
+	private float interpolationProgress;
+	private bool isMoving;
 
-    private void Start()
-    {
-        nextLocation = playerDestinationPoint.position;
 
-        ResetRotationLayout();
+	public List<Vector2Int> Positions => new() { CurrentPosition };
 
-    }
+	
+	public void Move(Vector2Int direction) {
+		interpolationOrigin = CurrentPosition;
+		CurrentPosition += direction;
+		StartMoveInterpolation();
+	}
 
-    private void Update()
-    {
-        //Read Inputs in Update
-        if (Vector3.Distance(this.transform.position, playerDestinationPoint.position) <= 0.05f && Vector3.Distance(this.transform.eulerAngles, playerDestinationPoint.eulerAngles) <= 0.1)
-        {
-            if (!Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
-            {
-                //Set next possible position
-                if (Mathf.Abs(Input.GetAxis("Horizontal")) > 0.25f)
-                {
-                    nextLocation = playerDestinationPoint.position + Vector3.right * (Mathf.Abs(Input.GetAxis("Horizontal")) / Input.GetAxis("Horizontal"));
-                }
-                else if (Mathf.Abs(Input.GetAxis("Vertical")) > 0.25f)
-                {
-                    nextLocation = playerDestinationPoint.position + Vector3.forward * (Mathf.Abs(Input.GetAxis("Vertical")) / Input.GetAxis("Vertical"));
-                }
+	public void MoveTo(Vector2Int gridPosition) {
+		interpolationOrigin = CurrentPosition;
+		CurrentPosition = gridPosition;
+		StartMoveInterpolation();
+	}
+	
+	public void Rotate(List<Vector2Int> newPositions) {
+		//do nothing
+	}
 
-                //Apply next position of viable and not blocked
-                if (nextLocation != playerDestinationPoint.position)
-                {
-                    if (!CheckForCollisionSphereTowards(nextLocation - playerDestinationPoint.position))
-                    {
-                        playerDestinationPoint.position = nextLocation;
-                    }
-                    else
-                    {
-                        nextLocation = playerDestinationPoint.position;
-                    }
-                }
-            }
-            else
-            {
-                //Set rotation and rotation direction
-                if (Mathf.Abs(Input.GetAxis("Horizontal")) > 0.25f)
-                {
-                    playerDestinationPoint.eulerAngles += Vector3.up * (Mathf.Abs(Input.GetAxis("Horizontal")) / Input.GetAxis("Horizontal") * 90);
+	Vector3 GridToWorldPos(Vector2Int gridPos) {
+		return new Vector3(gridPos.x + 0.5f, 0.5f, gridPos.y + 0.5f);
+	}
+	
+	private void Start() {
+		CurrentPosition = new Vector2Int(Mathf.FloorToInt(transform.position.x), Mathf.FloorToInt(transform.position.z));
+		interpolationOrigin = CurrentPosition;
 
-                    if (Input.GetAxis("Horizontal") > 0) rotatingRight = true;
-                    else rotatingRight = false;
-                }
-            }
+		if (!GlobalGrid.TryMove(this, Vector2Int.zero)) {
+			Debug.LogException(new Exception("Unable to register player position on spawn - overlaps?"));
+		}
+		
+		// ResetRotationLayout();
+	}
 
-            //Checking for Block in front and parenting to player
-            if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space) || rememberSpace)
-            {
-                rememberSpace = false;
+	private void StartMoveInterpolation() {
+		interpolationProgress = 0;
+		isMoving = true;
+	}
 
-                //Release Block
-                if (holdingBlock != null)
-                {
-                    block.parent.parent = null;
-                    holdingBlock.parent = null;
-                    holdingBlock = null;
+	private float EaseExponential(float t) {
+		return t >= 1 ? 1 : 1 - Mathf.Pow(2, -10 * t);
+	}
 
-                    SetLayer(block.parent.gameObject, LayerMask.NameToLayer("Block"));
+	private void Update() {
+		//Read Inputs in Update
 
-                    ResetRotationLayout();
+		// bool isRotating = Vector3.Distance(this.transform.eulerAngles, playerDestinationPoint.eulerAngles) <= 0.1;
+		
+		if (isMoving) {
+			interpolationProgress = Mathf.Clamp(interpolationProgress + Time.deltaTime * movementSpeed, 0, 1);
+			bool finished = Math.Abs(interpolationProgress - 1) < 0.00001f;
+			var start = GridToWorldPos(interpolationOrigin);
+			var end = GridToWorldPos(CurrentPosition);
+			
+			if (finished) {
+				transform.position = end;
+				interpolationOrigin = CurrentPosition;
+				isMoving = false;
+			}
+			else {
+				var t = EaseExponential(interpolationProgress);
+				transform.position = Vector3.Lerp(start, end, t);
+				return;
+			}
+		}
 
-                    return;
-                }
+		bool hasRotationInput = Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.RightShift);
+		Vector2 playerInputAxis = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
 
-                //Grab Block
-                block = null;
-                block = CheckForBlockAt(this.transform.position + this.transform.forward);
-                if (block != null)
-                {
-                    block.parent.parent = this.transform;
-                    holdingBlock = block.GetComponentInParent<BlockControls>().blockDestinationPoint;
-                    holdingBlock.parent = this.transform;
+		bool hasHorizontalInput = playerInputAxis.x != 0;
+		bool hasVerticalInput = playerInputAxis.y != 0;
+		
+		if(hasRotationInput && GlobalGrid.GridOccupants.TryGetValue(CurrentPosition + Vector2Int.up, out var occupant) && occupant != this) {
+			if (GlobalGrid.TryRotate(occupant, CurrentPosition, false)) {
+				return;
+			}
+		}
 
-                    SetRotationLayout(block.parent);
+		if (hasHorizontalInput) {
+			var direction = Math.Sign(playerInputAxis.x) * Vector2Int.right;
+			if (GlobalGrid.TryMove(this, direction, false)) {
+				return;
+			}
+			
+			// if(hasRotationInput && GlobalGrid.GridOccupants.TryGetValue(CurrentPosition + direction, out var occupant) && occupant != this) {
+			// 	if (GlobalGrid.TryRotate(occupant, CurrentPosition, true)) {
+			// 		Debug.Log($"Player rotates: {occupant}.");
+			// 		return;
+			// 	}
+			// }
+		}
 
-                    SetLayer(block.parent.gameObject, LayerMask.NameToLayer("Player"));
-                }
-            }
-        }
-        else
-        {
-            if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space)) rememberSpace = true;
-        }
+		if (hasVerticalInput) {
+			var direction= Math.Sign(playerInputAxis.y) * Vector2Int.up;
+			if (GlobalGrid.TryMove(this, direction, false)) {
+				return;
+			}
+			
+			// if(hasRotationInput && GlobalGrid.GridOccupants.TryGetValue(CurrentPosition + direction, out var occupant) && occupant != this) {
+			// 	if (GlobalGrid.TryRotate(occupant, CurrentPosition, true)) {
+			// 		Debug.Log($"Player rotates: {occupant}.");
+			// 		return;
+			// 	}
+			// }
+		}
 
-        
-    }
+		// //Apply next position of viable and not blocked
+		// if (nextPosition != playerDestinationPoint.position) {
+		// 	if (!CheckForCollisionSphereTowards(nextPosition - playerDestinationPoint.position)) {
+		// 		playerDestinationPoint.position = nextPosition;
+		// 	}
+		// 	else {
+		// 		nextPosition = playerDestinationPoint.position;
+		// 	}
+		// }
 
-    // Update is called once per frame
-    void FixedUpdate()
-    {
-        //Apply InputChanges in FixedUpdate
+		// //Set rotation and rotation direction
+		// if (Mathf.Abs(Input.GetAxis("Horizontal")) > 0.25f) {
+		// 	playerDestinationPoint.eulerAngles += Vector3.up * (Mathf.Abs(Input.GetAxis("Horizontal")) / Input.GetAxis("Horizontal") * 90);
+		//
+		// 	if (Input.GetAxis("Horizontal") > 0) rotatingRight = true;
+		// 	else rotatingRight = false;
+		// }
 
-        //Move on grid to destination
-        this.transform.position = Vector3.MoveTowards(this.transform.position, playerDestinationPoint.position, Time.fixedDeltaTime * movementSpeed);
+		//Checking for Block in front and parenting to player
+		// if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space) || rememberSpace) {
+		// 	rememberSpace = false;
+		//
+		// 	//Release Block
+		// 	if (holdingBlock != null) {
+		// 		block.parent.parent = null;
+		// 		holdingBlock.parent = null;
+		// 		holdingBlock = null;
+		//
+		// 		SetLayer(block.parent.gameObject, LayerMask.NameToLayer("Block"));
+		//
+		// 		ResetRotationLayout();
+		//
+		// 		return;
+		// 	}
+		//
+		// 	//Grab Block
+		// 	block = null;
+		// 	block = CheckForBlockAt(this.transform.position + this.transform.forward);
+		// 	if (block != null) {
+		// 		block.parent.parent = this.transform;
+		// 		holdingBlock = block.GetComponentInParent<BlockControls>().blockDestinationPoint;
+		// 		holdingBlock.parent = this.transform;
+		//
+		// 		SetRotationLayout(block.parent);
+		//
+		// 		SetLayer(block.parent.gameObject, LayerMask.NameToLayer("Player"));
+		// 	}
+		// }
+		// else {
+		// 	if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space)) rememberSpace = true;
+		// }
+	}
 
-        //Rotate
-        if(Vector3.Distance(this.transform.eulerAngles, playerDestinationPoint.eulerAngles) >= 0.1)
-        {
-            //Apply rotation
-            if(rotatingRight)
-                this.transform.RotateAround(playerDestinationPoint.position, Vector3.up, Time.fixedDeltaTime * rotationSpeed);
-            else
-                this.transform.RotateAround(playerDestinationPoint.position, Vector3.down, Time.fixedDeltaTime * rotationSpeed);
+// Update is called once per frame
+	void FixedUpdate() {
+		//Apply InputChanges in FixedUpdate
 
-            //Check for collision during rotation
-            if (CheckRotationCollisions())
-            {
-                //Reverse rotation and destination back to before it was set
-                if (rotatingRight) playerDestinationPoint.eulerAngles -= Vector3.up * 90;
-                else playerDestinationPoint.eulerAngles += Vector3.up * 90;
-                rotatingRight = !rotatingRight;
-            }
-        }
-    }
+		//Move on grid to destination
+		// this.transform.position = Vector3.MoveTowards(this.transform.position, playerDestinationPoint.position, Time.fixedDeltaTime * movementSpeed);
 
-    bool CheckForCollisionSphereTowards(Vector3 direction)
-    {
-        bool collision = false;
+		// //Rotate
+		// if (Vector3.Distance(this.transform.eulerAngles, playerDestinationPoint.eulerAngles) >= 0.1) {
+		// 	//Apply rotation
+		// 	if (rotatingRight)
+		// 		this.transform.RotateAround(playerDestinationPoint.position, Vector3.up, Time.fixedDeltaTime * rotationSpeed);
+		// 	else
+		// 		this.transform.RotateAround(playerDestinationPoint.position, Vector3.down, Time.fixedDeltaTime * rotationSpeed);
+		//
+		// 	//Check for collision during rotation
+		// 	if (CheckRotationCollisions()) {
+		// 		//Reverse rotation and destination back to before it was set
+		// 		if (rotatingRight) playerDestinationPoint.eulerAngles -= Vector3.up * 90;
+		// 		else playerDestinationPoint.eulerAngles += Vector3.up * 90;
+		// 		rotatingRight = !rotatingRight;
+		// 	}
+		// }
+	}
 
-        Vector3 heightOffset = Vector3.down * 0.5f;
-        for (int x = 0; x < playerBlockLayout.GetLength(0); x++)
-        {
-            for (int z = 0; z < playerBlockLayout.GetLength(1); z++)
-            {
-                if (playerBlockLayout[x, z] == 1)
-                {
-                    collision = Physics.CheckSphere(playerDestinationPoint.position + direction + heightOffset + this.transform.right * (x - 3) + this.transform.forward * (z - 3), 0.2f, layermask);
-                }
-                if (collision)
-                {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
+	// bool CheckForCollisionSphereTowards(Vector3 direction) {
+	// 	bool collision = false;
+	//
+	// 	Vector3 heightOffset = Vector3.down * 0.5f;
+	// 	for (int x = 0; x < playerBlockLayout.GetLength(0); x++) {
+	// 		for (int z = 0; z < playerBlockLayout.GetLength(1); z++) {
+	// 			if (playerBlockLayout[x, z] == 1) {
+	// 				collision = Physics.CheckSphere(
+	// 					// playerDestinationPoint.position + direction + heightOffset + this.transform.right * (x - 3) + this.transform.forward * (z - 3), 0.2f,
+	// 					// layermask);
+	// 			}
+	//
+	// 			if (collision) {
+	// 				return true;
+	// 			}
+	// 		}
+	// 	}
+	//
+	// 	return false;
+	// }
 
-    void ResetRotationLayout()
-    {
-        for (int x = 0; x < playerBlockLayout.GetLength(0); x++)
-        {
-            for (int z = 0; z < playerBlockLayout.GetLength(1); z++)
-            {
-                playerBlockLayout[x, z] = 0;
-            }
-        }
+	void ResetRotationLayout() {
+		for (int x = 0; x < playerBlockLayout.GetLength(0); x++) {
+			for (int z = 0; z < playerBlockLayout.GetLength(1); z++) {
+				playerBlockLayout[x, z] = 0;
+			}
+		}
 
-        playerBlockLayout[3, 3] = 1;
-    }
+		playerBlockLayout[3, 3] = 1;
+	}
 
-    void SetRotationLayout(Transform blockToCompare)
-    {
-        Transform compareBlock = null; 
-        for (int x = 0; x < playerBlockLayout.GetLength(0); x++)
-        {
-            for (int z = 0; z < playerBlockLayout.GetLength(1); z++)
-            {
-                compareBlock = CheckForBlockAt(this.transform.position + this.transform.right * (x - 3) + this.transform.forward * (z - 3));
+	void SetRotationLayout(Transform blockToCompare) {
+		Transform compareBlock = null;
+		for (int x = 0; x < playerBlockLayout.GetLength(0); x++) {
+			for (int z = 0; z < playerBlockLayout.GetLength(1); z++) {
+				compareBlock = CheckForBlockAt(this.transform.position + this.transform.right * (x - 3) + this.transform.forward * (z - 3));
 
-                if (compareBlock != null)
-                {
-                    if (compareBlock.parent == blockToCompare)
-                    {
-                        playerBlockLayout[x, z] = 1;
-                    }
-                }
-            }
-        }
+				if (compareBlock != null) {
+					if (compareBlock.parent == blockToCompare) {
+						playerBlockLayout[x, z] = 1;
+					}
+				}
+			}
+		}
 
-        string output;
+		string output;
 
-        for (int x = 0; x < playerBlockLayout.GetLength(0); x++)
-        {
-            output = "";
-            for (int z = 0; z < playerBlockLayout.GetLength(1); z++)
-            {
-                output += playerBlockLayout[x,z] + " ";
-            }
-        }
-    }
+		for (int x = 0; x < playerBlockLayout.GetLength(0); x++) {
+			output = "";
+			for (int z = 0; z < playerBlockLayout.GetLength(1); z++) {
+				output += playerBlockLayout[x, z] + " ";
+			}
+		}
+	}
 
-    bool CheckRotationCollisions()
-    {
-        bool colliding = false;
+	bool CheckRotationCollisions() {
+		bool colliding = false;
 
-        for (int x = 0; x < playerBlockLayout.GetLength(0); x++)
-        {
-            for (int z = 0; z < playerBlockLayout.GetLength(1); z++)
-            {
-                if (playerBlockLayout[x,z] == 1)
-                {
-                    colliding = CheckForCollisionBoxAt(this.transform.position + this.transform.right * (x - 3) + this.transform.forward * (z - 3));
-                    if (colliding) return true;
-                }
-            }
-        }
+		for (int x = 0; x < playerBlockLayout.GetLength(0); x++) {
+			for (int z = 0; z < playerBlockLayout.GetLength(1); z++) {
+				if (playerBlockLayout[x, z] == 1) {
+					colliding = CheckForCollisionBoxAt(this.transform.position + this.transform.right * (x - 3) + this.transform.forward * (z - 3));
+					if (colliding) return true;
+				}
+			}
+		}
 
-        return false;
-    }
+		return false;
+	}
 
-    bool CheckForCollisionBoxAt(Vector3 location)
-    {
-        return Physics.CheckBox(location, Vector3.one * 0.4f, this.transform.rotation, layermask);
-    }
+	bool CheckForCollisionBoxAt(Vector3 location) {
+		return Physics.CheckBox(location, Vector3.one * 0.4f, this.transform.rotation, layermask);
+	}
 
-    void SetLayer(GameObject gaObjToSet, int lm)
-    {
-        gaObjToSet.layer = lm;
-        foreach(Transform child in gaObjToSet.transform)
-        {
-            if (child != null) { child.gameObject.layer = lm;}
-        }
-    }
+	void SetLayer(GameObject gaObjToSet, int lm) {
+		gaObjToSet.layer = lm;
+		foreach (Transform child in gaObjToSet.transform) {
+			if (child != null) {
+				child.gameObject.layer = lm;
+			}
+		}
+	}
 
-    Transform CheckForBlockAt(Vector3 location)
-    {
-        Vector3 heightOffset = Vector3.down * 0.5f;
-        Collider[] colliders = Physics.OverlapSphere(location + heightOffset, 0.2f, LayerMask.GetMask("Block"));
-        if(colliders.Length > 0)
-        {
-            return colliders[0].transform;
-        }
-        return null;
-    }
+	Transform CheckForBlockAt(Vector3 location) {
+		Vector3 heightOffset = Vector3.down * 0.5f;
+		Collider[] colliders = Physics.OverlapSphere(location + heightOffset, 0.2f, LayerMask.GetMask("Block"));
+		if (colliders.Length > 0) {
+			return colliders[0].transform;
+		}
+
+		return null;
+	}
 }
