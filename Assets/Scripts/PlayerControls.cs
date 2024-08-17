@@ -202,7 +202,6 @@ public class PlayerControls : MonoBehaviour
             {
                 output += playerBlockLayout[x,z] + " ";
             }
-            Debug.Log(output);
         }
     }
 

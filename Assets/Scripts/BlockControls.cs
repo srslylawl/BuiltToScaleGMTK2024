@@ -24,7 +24,7 @@ public class BlockControls : MonoBehaviour
 
         if (Vector3.Distance(this.transform.position, blockDestinationPoint.position) <= 0.05f)
         {
-            if (CheckForBeltCollision())
+            if (CheckForBeltCollision() && this.gameObject.layer == LayerMask.NameToLayer("Block"))
             {
                 if (moveLeftOnBelt) blockDestinationPoint.position += Vector3.left;
                 else blockDestinationPoint.position += Vector3.right;
