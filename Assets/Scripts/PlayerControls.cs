@@ -6,7 +6,9 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 	public float movementSpeed = 5f;
 	public float rotationSpeed = 180f;
 	private bool rotatingRight = true;
+
 	private bool rememberSpace = false;
+
 	// public Transform playerDestinationPoint;
 	private Transform block = null;
 	private Transform holdingBlock;
@@ -14,8 +16,8 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 
 	private int[,] playerBlockLayout = new int[7, 7];
 
-	
-	public Vector2Int CurrentPosition { get; set; }//where we actually are on the grid
+
+	public Vector2Int CurrentPosition { get; set; } //where we actually are on the grid
 	private Vector2Int interpolationOrigin; //where we are interpolating from
 	private float interpolationProgress;
 	private bool isMoving;
@@ -23,7 +25,10 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 
 	public List<Vector2Int> Positions => new() { CurrentPosition };
 
-	
+	private Vector2Int Forward = Vector2Int.left;
+	private Vector2Int Right = Vector2Int.up;
+
+
 	public void Move(Vector2Int direction) {
 		interpolationOrigin = CurrentPosition;
 		CurrentPosition += direction;
@@ -35,7 +40,7 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 		CurrentPosition = gridPosition;
 		StartMoveInterpolation();
 	}
-	
+
 	public void Rotate(List<Vector2Int> newPositions) {
 		//do nothing
 	}
@@ -43,7 +48,7 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 	Vector3 GridToWorldPos(Vector2Int gridPos) {
 		return new Vector3(gridPos.x + 0.5f, 0.5f, gridPos.y + 0.5f);
 	}
-	
+
 	private void Start() {
 		CurrentPosition = new Vector2Int(Mathf.FloorToInt(transform.position.x), Mathf.FloorToInt(transform.position.z));
 		interpolationOrigin = CurrentPosition;
@@ -51,7 +56,7 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 		if (!GlobalGrid.TryMove(this, Vector2Int.zero)) {
 			Debug.LogException(new Exception("Unable to register player position on spawn - overlaps?"));
 		}
-		
+
 		// ResetRotationLayout();
 	}
 
@@ -64,17 +69,42 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 		return t >= 1 ? 1 : 1 - Mathf.Pow(2, -10 * t);
 	}
 
+	private Block highlightedBlock;
+
+	private void HandleHighlighting() {
+		if (GlobalGrid.GridOccupants.TryGetValue(CurrentPosition + Forward, out var toHighlight) && toHighlight is Block blockToHighlight) {
+			if (!highlightedBlock) {
+				blockToHighlight.SetHighlight(true);
+				highlightedBlock = blockToHighlight;
+				return;
+			}
+
+			if (highlightedBlock == blockToHighlight) return;
+
+			highlightedBlock.SetHighlight(false);
+			highlightedBlock = blockToHighlight;
+			blockToHighlight.SetHighlight(true);
+		}
+
+		if (highlightedBlock) {
+			highlightedBlock.SetHighlight(false);
+			highlightedBlock = null;
+		}
+	}
+
 	private void Update() {
 		//Read Inputs in Update
 
 		// bool isRotating = Vector3.Distance(this.transform.eulerAngles, playerDestinationPoint.eulerAngles) <= 0.1;
 		
+		HandleHighlighting();
+
 		if (isMoving) {
 			interpolationProgress = Mathf.Clamp(interpolationProgress + Time.deltaTime * movementSpeed, 0, 1);
 			bool finished = Math.Abs(interpolationProgress - 1) < 0.00001f;
 			var start = GridToWorldPos(interpolationOrigin);
 			var end = GridToWorldPos(CurrentPosition);
-			
+
 			if (finished) {
 				transform.position = end;
 				interpolationOrigin = CurrentPosition;
@@ -92,19 +122,34 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 
 		bool hasHorizontalInput = playerInputAxis.x != 0;
 		bool hasVerticalInput = playerInputAxis.y != 0;
-		
-		if(hasRotationInput && GlobalGrid.GridOccupants.TryGetValue(CurrentPosition + Vector2Int.up, out var occupant) && occupant != this) {
-			if (GlobalGrid.TryRotate(occupant, CurrentPosition, false)) {
+
+		bool isGrabbing = false;
+
+
+		if (hasRotationInput && highlightedBlock) {
+			if (GlobalGrid.TryRotate(highlightedBlock, CurrentPosition, false)) {
 				return;
 			}
 		}
 
-		if (hasHorizontalInput) {
-			var direction = Math.Sign(playerInputAxis.x) * Vector2Int.right;
-			if (GlobalGrid.TryMove(this, direction, false)) {
-				return;
+		if (hasHorizontalInput && Input.GetButtonDown("Horizontal")) {
+			if (!isGrabbing) {
+				bool clockWise = Math.Abs(playerInputAxis.x - 1) < 0.00001f;
+				var newFwd = GlobalGrid.RotatePoint(Forward, Vector2Int.zero, clockWise);
+				var newRight = GlobalGrid.RotatePoint(Right, Vector2Int.zero, clockWise);
+
+				Forward = newFwd;
+				Right = newRight;
+
+				float deg = clockWise ? 90 : -90;
+				transform.Rotate(new Vector3(0, 1.0f, 0), deg);
 			}
-			
+
+			// var direction = Math.Sign(playerInputAxis.x) * Vector2Int.right;
+			// if (GlobalGrid.TryMove(this, direction, false)) {
+			// 	return;
+			// }
+
 			// if(hasRotationInput && GlobalGrid.GridOccupants.TryGetValue(CurrentPosition + direction, out var occupant) && occupant != this) {
 			// 	if (GlobalGrid.TryRotate(occupant, CurrentPosition, true)) {
 			// 		Debug.Log($"Player rotates: {occupant}.");
@@ -114,11 +159,11 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 		}
 
 		if (hasVerticalInput) {
-			var direction= Math.Sign(playerInputAxis.y) * Vector2Int.up;
+			var direction = Math.Sign(playerInputAxis.y) * Forward;
 			if (GlobalGrid.TryMove(this, direction, false)) {
 				return;
 			}
-			
+
 			// if(hasRotationInput && GlobalGrid.GridOccupants.TryGetValue(CurrentPosition + direction, out var occupant) && occupant != this) {
 			// 	if (GlobalGrid.TryRotate(occupant, CurrentPosition, true)) {
 			// 		Debug.Log($"Player rotates: {occupant}.");

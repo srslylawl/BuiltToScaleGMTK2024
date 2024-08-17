@@ -17,12 +17,22 @@ public class Block : MonoBehaviour, IGridOccupant {
 	private bool isMoving;
 	private float interpolationProgress;
 
+	private Color mainColor;
+
 	private Vector3 GridToWorldPos(Vector2Int gridPos) {
 		return new Vector3(gridPos.x, 0, gridPos.y);
 	}
 	
 	private float EaseExponential(float t) {
 		return t >= 1 ? 1 : 1 - Mathf.Pow(2, -10 * t);
+	}
+
+	private Color highlightColor = new Color(230f / 255f, 255 / 255f, 204 / 255f, 1.0f);
+	
+	public void SetHighlight(bool highlight) {
+		foreach (var paletteChild in paletteChildren) {
+			paletteChild.GetComponent<MeshRenderer>().material.SetColor("_Color", highlight ? highlightColor : mainColor);
+		}
 	}
 
 	private void Update() {
@@ -58,7 +68,7 @@ public class Block : MonoBehaviour, IGridOccupant {
 		
 		Positions = new List<Vector2Int>(blockData.GridPositions.Count);
 		
-		var randomColor = Random.ColorHSV(0f, 1f, 1f, 1f, 0.5f, 1f);
+		mainColor = Random.ColorHSV(0f, 1f, 1f, 1f, 0.5f, 1f);
 
 		paletteChildren.Capacity = blockData.GridPositions.Count;
 		foreach (var blockDataGridPosition in blockData.GridPositions) {
@@ -66,7 +76,7 @@ public class Block : MonoBehaviour, IGridOccupant {
 			var go = Instantiate(palettePrefab, transform.position + new Vector3(blockDataGridPosition.x, 0, blockDataGridPosition.y), Quaternion.identity,
 				transform);
 			go.name = $"Child {blockDataGridPosition.x},{blockDataGridPosition.y}";
-			go.GetComponent<MeshRenderer>().material.SetColor("_Color", randomColor);
+			go.GetComponent<MeshRenderer>().material.SetColor("_Color", mainColor);
 			paletteChildren.Add(go);
 		}
 		

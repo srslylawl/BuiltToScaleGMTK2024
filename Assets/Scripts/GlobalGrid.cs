@@ -36,7 +36,7 @@
 			return true;
 		}
 
-		private static Vector2Int RotatePoint(Vector2Int point, Vector2Int origin, bool clockWise) {
+		public static Vector2Int RotatePoint(Vector2Int point, Vector2Int origin, bool clockWise) {
 			var temp = point - origin;
 			if (clockWise) {
 				(temp.x, temp.y) = (temp.y, -temp.x);
