@@ -113,36 +113,35 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 			else {
 				var t = EaseExponential(interpolationProgress);
 				transform.position = Vector3.Lerp(start, end, t);
-				return;
+				// return;
 			}
 		}
 
-		bool hasRotationInput = Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.RightShift);
+		// bool hasRotationInput = Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.RightShift);
 		Vector2 playerInputAxis = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
 
 		bool hasHorizontalInput = playerInputAxis.x != 0;
 		bool hasVerticalInput = playerInputAxis.y != 0;
 
-		bool isGrabbing = false;
-
-
-		if (hasRotationInput && highlightedBlock) {
-			if (GlobalGrid.TryRotate(highlightedBlock, CurrentPosition, false)) {
-				return;
-			}
-		}
+		bool isGrabbing = highlightedBlock && Input.GetKey(KeyCode.Space);
 
 		if (hasHorizontalInput && Input.GetButtonDown("Horizontal")) {
+			bool clockWise = Math.Abs(playerInputAxis.x - 1) < 0.00001f;
 			if (!isGrabbing) {
-				bool clockWise = Math.Abs(playerInputAxis.x - 1) < 0.00001f;
-				var newFwd = GlobalGrid.RotatePoint(Forward, Vector2Int.zero, clockWise);
-				var newRight = GlobalGrid.RotatePoint(Right, Vector2Int.zero, clockWise);
-
-				Forward = newFwd;
-				Right = newRight;
-
-				float deg = clockWise ? 90 : -90;
-				transform.Rotate(new Vector3(0, 1.0f, 0), deg);
+				// RotateCharacter(clockWise);
+				// Forward = 
+				var direction = Math.Sign(playerInputAxis.x) * Vector2Int.right;
+				if (GlobalGrid.TryMove(this, direction, false)) {
+					RotateToForwardAxis(direction);
+					return;
+				}
+			}
+			else {
+				//is grabbing
+				if (GlobalGrid.TryRotate(highlightedBlock, CurrentPosition, clockWise)) {
+					RotateCharacter(clockWise);
+					return;
+				}
 			}
 
 			// var direction = Math.Sign(playerInputAxis.x) * Vector2Int.right;
@@ -158,37 +157,24 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 			// }
 		}
 
-		if (hasVerticalInput) {
+		if (hasVerticalInput && Input.GetButtonDown("Vertical")) {
 			var direction = Math.Sign(playerInputAxis.y) * Forward;
-			if (GlobalGrid.TryMove(this, direction, false)) {
-				return;
+
+			if (isGrabbing) {
+				List<IGridOccupant> occupants = new(){this, highlightedBlock};
+				if (GlobalGrid.TryMove(occupants, direction, true)) {
+					return;
+				}
+			}
+			else {
+				direction = Math.Sign(playerInputAxis.y) * Vector2Int.up;
+				if (GlobalGrid.TryMove(this, direction, false)) {
+					RotateToForwardAxis(direction);
+					return;
+				}
 			}
 
-			// if(hasRotationInput && GlobalGrid.GridOccupants.TryGetValue(CurrentPosition + direction, out var occupant) && occupant != this) {
-			// 	if (GlobalGrid.TryRotate(occupant, CurrentPosition, true)) {
-			// 		Debug.Log($"Player rotates: {occupant}.");
-			// 		return;
-			// 	}
-			// }
 		}
-
-		// //Apply next position of viable and not blocked
-		// if (nextPosition != playerDestinationPoint.position) {
-		// 	if (!CheckForCollisionSphereTowards(nextPosition - playerDestinationPoint.position)) {
-		// 		playerDestinationPoint.position = nextPosition;
-		// 	}
-		// 	else {
-		// 		nextPosition = playerDestinationPoint.position;
-		// 	}
-		// }
-
-		// //Set rotation and rotation direction
-		// if (Mathf.Abs(Input.GetAxis("Horizontal")) > 0.25f) {
-		// 	playerDestinationPoint.eulerAngles += Vector3.up * (Mathf.Abs(Input.GetAxis("Horizontal")) / Input.GetAxis("Horizontal") * 90);
-		//
-		// 	if (Input.GetAxis("Horizontal") > 0) rotatingRight = true;
-		// 	else rotatingRight = false;
-		// }
 
 		//Checking for Block in front and parenting to player
 		// if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space) || rememberSpace) {
@@ -223,6 +209,23 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 		// else {
 		// 	if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space)) rememberSpace = true;
 		// }
+	}
+
+	private void RotateCharacter(bool clockwise) {
+		var newFwd = GlobalGrid.RotatePoint(Forward, Vector2Int.zero, clockwise);
+		var newRight = GlobalGrid.RotatePoint(Right, Vector2Int.zero, clockwise);
+
+		Forward = newFwd;
+		Right = newRight;
+
+		float deg = clockwise ? 90 : -90;
+		transform.Rotate(new Vector3(0, 1.0f, 0), deg);
+	}
+
+	private void RotateToForwardAxis(Vector2Int direction) {
+		Forward = direction;
+		(Right.x, Right.y) = (Forward.y, -Forward.x);
+		transform.rotation = Quaternion.Euler(new Vector3(0, Mathf.Atan2(Forward.x, Forward.y) * Mathf.Rad2Deg + 90, 0));
 	}
 
 // Update is called once per frame
