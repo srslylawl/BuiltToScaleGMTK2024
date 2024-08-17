@@ -10,6 +10,7 @@ public class PlayerControls : MonoBehaviour
     public float movementSpeed = 5f;
     public float rotationSpeed = 180f;
     private bool rotatingRight = true;
+    private bool rememberSpace = false;
     public Transform playerDestinationPoint;
     private Transform block = null;
     private Transform holdingBlock;
@@ -31,7 +32,7 @@ public class PlayerControls : MonoBehaviour
         //Read Inputs in Update
         if (Vector3.Distance(this.transform.position, playerDestinationPoint.position) <= 0.05f && Vector3.Distance(this.transform.eulerAngles, playerDestinationPoint.eulerAngles) <= 0.1)
         {
-            if (!Input.GetKey(KeyCode.LeftShift))
+            if (!Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
             {
                 //Set next possible position
                 if (Mathf.Abs(Input.GetAxis("Horizontal")) > 0.25f)
@@ -69,8 +70,10 @@ public class PlayerControls : MonoBehaviour
             }
 
             //Checking for Block in front and parenting to player
-            if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space))
+            if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space) || rememberSpace)
             {
+                rememberSpace = false;
+
                 //Release Block
                 if (holdingBlock != null)
                 {
@@ -100,6 +103,12 @@ public class PlayerControls : MonoBehaviour
                 }
             }
         }
+        else
+        {
+            if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space)) rememberSpace = true;
+        }
+
+        
     }
 
     // Update is called once per frame
@@ -134,17 +143,17 @@ public class PlayerControls : MonoBehaviour
     {
         bool collision = false;
 
+        Vector3 heightOffset = Vector3.down * 0.5f;
         for (int x = 0; x < playerBlockLayout.GetLength(0); x++)
         {
             for (int z = 0; z < playerBlockLayout.GetLength(1); z++)
             {
                 if (playerBlockLayout[x, z] == 1)
                 {
-                    collision = Physics.CheckSphere(playerDestinationPoint.position + direction + this.transform.right * (x - 3) + this.transform.forward * (z - 3), 0.2f, layermask);
+                    collision = Physics.CheckSphere(playerDestinationPoint.position + direction + heightOffset + this.transform.right * (x - 3) + this.transform.forward * (z - 3), 0.2f, layermask);
                 }
                 if (collision)
                 {
-                    Debug.Log(x + " " + z);
                     return true;
                 }
             }

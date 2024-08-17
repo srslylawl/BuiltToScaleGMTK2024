@@ -654,7 +654,7 @@ MonoBehaviour:
   playerDestinationPoint: {fileID: 1445145918}
   layermask:
     serializedVersion: 2
-    m_Bits: 128
+    m_Bits: 384
 --- !u!1 &1413458292
 GameObject:
   m_ObjectHideFlags: 0
