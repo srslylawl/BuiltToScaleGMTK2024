@@ -96,7 +96,7 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 		//Read Inputs in Update
 
 		// bool isRotating = Vector3.Distance(this.transform.eulerAngles, playerDestinationPoint.eulerAngles) <= 0.1;
-		
+
 		HandleHighlighting();
 
 		if (isMoving) {
@@ -131,8 +131,8 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 				// RotateCharacter(clockWise);
 				// Forward = 
 				var direction = Math.Sign(playerInputAxis.x) * Vector2Int.right;
+				RotateToForwardAxis(direction);
 				if (GlobalGrid.TryMove(this, direction, false)) {
-					RotateToForwardAxis(direction);
 					return;
 				}
 			}
@@ -161,19 +161,18 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 			var direction = Math.Sign(playerInputAxis.y) * Forward;
 
 			if (isGrabbing) {
-				List<IGridOccupant> occupants = new(){this, highlightedBlock};
+				List<IGridOccupant> occupants = new() { this, highlightedBlock };
 				if (GlobalGrid.TryMove(occupants, direction, true)) {
 					return;
 				}
 			}
 			else {
 				direction = Math.Sign(playerInputAxis.y) * Vector2Int.up;
+				RotateToForwardAxis(direction);
 				if (GlobalGrid.TryMove(this, direction, false)) {
-					RotateToForwardAxis(direction);
 					return;
 				}
 			}
-
 		}
 
 		//Checking for Block in front and parenting to player
