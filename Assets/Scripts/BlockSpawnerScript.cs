@@ -13,7 +13,7 @@ public class BlockSpawnerScript : MonoBehaviour
     void Start()
     {
         //Call BlockSpawn Methode after time
-        Invoke("SpawnBlock", spawnTimer + Random.Range(-spawnTimeVariance, spawnTimeVariance));
+        Invoke("SpawnBlock", 0 + Random.Range(-spawnTimeVariance, spawnTimeVariance));
     }
 
     void SpawnBlock()
