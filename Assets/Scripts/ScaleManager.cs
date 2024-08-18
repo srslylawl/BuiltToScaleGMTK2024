@@ -54,8 +54,6 @@ public class ScaleManager : MonoBehaviour
     {
         win = true;
 
-
-        //Not working grid positions confusing. Andreas not around to be asked!
         foreach (Vector2Int v2 in scaleLayoutActive.GridPositions)
         {
             GlobalGrid.GridOccupants.TryGetValue(v2, out var occupant);
