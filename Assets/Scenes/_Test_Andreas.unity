@@ -1761,8 +1761,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ef72d67f6e59e04c8538d6ebc6bf015, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spawnTimer: 10
-  spawnTimeVariance: 0
+  timeBetweenSpawns: 5
   PalettePrefab: {fileID: 7392019034812524260, guid: 5d661be33d5f0b04489d0a84f1d02f0f, type: 3}
   blockData:
   - {fileID: 11400000, guid: 15c743f1bbc2b0a43a9dce14b76c0f97, type: 2}
