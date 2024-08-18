@@ -3,7 +3,22 @@ guid: 4cde262ee389b134a95ee9981d15d55d
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Orange
+    second: {fileID: 2100000, guid: 3ce58db2d669eab4dac3ca8d9f798f50, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Reflection
+    second: {fileID: 2100000, guid: 3c01fd6b7ca609942b0e0a3bcb0854eb, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: lambert15
+    second: {fileID: 2100000, guid: 3ce58db2d669eab4dac3ca8d9f798f50, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

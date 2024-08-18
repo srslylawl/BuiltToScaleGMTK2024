@@ -3,7 +3,37 @@ guid: dfc0b3d1840284f4caac1d4fa2355185
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Black
+    second: {fileID: 2100000, guid: 07b61dd1225c7df488af91a3e332b3d9, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Copper
+    second: {fileID: 2100000, guid: f7b49e7ef32faa54a80c01ba1c7df0a6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Iron
+    second: {fileID: 2100000, guid: 02a9d44ddde629943b6ac843bd329372, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Lamp
+    second: {fileID: 2100000, guid: 5c2309b8fe9fb4b45b9897ad6a3dc614, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: PlungerRed
+    second: {fileID: 2100000, guid: 3172ae77359e7444493e8e863b5bebc9, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: lambert1
+    second: {fileID: 2100000, guid: f7b49e7ef32faa54a80c01ba1c7df0a6, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
