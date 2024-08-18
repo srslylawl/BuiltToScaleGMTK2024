@@ -1,14 +1,18 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEditor.Timeline.Actions;
+using TMPro;
 using UnityEngine;
-using UnityEngine.UIElements;
+
 
 public class ScaleManager : MonoBehaviour
 {
     public GameObject Floor;
     public GameObject Scale;
+    public GameObject Canvas;
+    public GameObject ScoreNum;
+    public GameObject PerfectPlay;
+    public List<GameObject> scoresList = new();
     private bool win = false;
     public GridLayoutData floorLayoutActive;
     private GridLayoutData scaleLayoutActive;
@@ -30,7 +34,7 @@ public class ScaleManager : MonoBehaviour
             }
         }
 
-        scaleLayoutActive = scaleLayouts[Random.Range(0, scaleLayouts.Count)];
+        scaleLayoutActive = scaleLayouts[UnityEngine.Random.Range(0, scaleLayouts.Count)];
         
         foreach (Vector2Int v2 in scaleLayoutActive.GridPositions)
         {
@@ -49,7 +53,7 @@ public class ScaleManager : MonoBehaviour
     void CheckForWin()
     {
         win = true;
-        
+
 
         //Not working grid positions confusing. Andreas not around to be asked!
         foreach (Vector2Int v2 in scaleLayoutActive.GridPositions)
@@ -58,7 +62,7 @@ public class ScaleManager : MonoBehaviour
             win = occupant != null && !((MonoBehaviour)occupant).CompareTag("Player");
             if (!win) break;
         }
-        
+
 
         if (win)
         {
@@ -72,9 +76,18 @@ public class ScaleManager : MonoBehaviour
                 blocks.Add(oc);
                 if (blocksScoreCount.ContainsKey(oc) && occupant != null) blocksScoreCount[oc]++;
                 else blocksScoreCount.Add(oc, 1);
+
+                if (occupant != null)
+                {
+                    Vector3 screenPos = Camera.main.WorldToScreenPoint(new Vector3(v2.x, 0, v2.y));
+                    GameObject sn = Instantiate(ScoreNum, screenPos, Quaternion.identity, Canvas.transform);
+                    sn.GetComponent<TextMeshProUGUI>().text = "+" + blocksScoreCount[oc] * 10;
+                    sn.SetActive(false);
+                    scoresList.Add(sn);
+                }
             }
 
-            foreach(int value in blocksScoreCount.Values)
+            foreach (int value in blocksScoreCount.Values)
             {
                 roundScore += (value * (value + 1) / 2) * 10;
             }
@@ -83,10 +96,26 @@ public class ScaleManager : MonoBehaviour
             foreach (Vector2Int v2 in floorLayoutActive.GridPositions)
             {
                 GlobalGrid.GridOccupants.TryGetValue(v2, out var occupant);
-                if (occupant != null && !((MonoBehaviour)occupant).CompareTag("Player")) { roundScore -= 20; }
+                if (occupant != null && !((MonoBehaviour)occupant).CompareTag("Player"))
+                {
+                    roundScore -= 20;
+                    Vector3 screenPos = Camera.main.WorldToScreenPoint(new Vector3(v2.x, 0, v2.y));
+                    GameObject sn = Instantiate(ScoreNum, screenPos, Quaternion.identity, Canvas.transform);
+                    sn.GetComponent<TextMeshProUGUI>().text = "-20";
+                    sn.SetActive(false);
+                    scoresList.Add(sn);
+                }
             }
 
-            if (roundScore == scoreTemp) roundScore += 200;
+            if (roundScore == scoreTemp)
+            {
+                roundScore += 200;
+                Vector3 screenPos = new Vector3(Screen.width / 2, Screen.height / 2, 0);
+                GameObject sn = Instantiate(ScoreNum, screenPos, Quaternion.identity, Canvas.transform);
+            }
+
+            int invokeCounter = 1;
+            StartCoroutine(SpawnScores(scoresList));
 
             //Do Score Stuff
             GlobalGameloop.FinishRound(roundScore);
@@ -104,6 +133,15 @@ public class ScaleManager : MonoBehaviour
         Invoke("CheckForWin", 1f);
     }
 
+    IEnumerator SpawnScores(List<GameObject> scores)
+    {
+        foreach(GameObject s in scores)
+        {
+            s.SetActive(true);
+            yield return new WaitForSeconds(0.05f);
+        }
+        
+    }
     void ResetScales()
     {
         win = false;
@@ -121,7 +159,7 @@ public class ScaleManager : MonoBehaviour
             }
         }
 
-        scaleLayoutActive = scaleLayouts[Random.Range(0, scaleLayouts.Count)];
+        scaleLayoutActive = scaleLayouts[UnityEngine.Random.Range(0, scaleLayouts.Count)];
 
         foreach (Vector2Int v2 in scaleLayoutActive.GridPositions)
         {
