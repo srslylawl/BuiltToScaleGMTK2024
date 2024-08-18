@@ -13,6 +13,9 @@ public class BlockSpawnerScript : MonoBehaviour {
 	[SerializeField] public GameObject PalettePrefab;
 	[SerializeField] public List<BlockData> blockData = new();
 
+
+	private List<BlockData> currentRNGBucket = new();
+
 	// Start is called before the first frame update
 	void Start() {
 		//Call BlockSpawn Methode after time
@@ -29,12 +32,23 @@ public class BlockSpawnerScript : MonoBehaviour {
 		}
 	}
 
+	private void FillRngBucket() {
+		foreach (var data in blockData) {
+			currentRNGBucket.Add(data);
+		}
+	}
+
 	void SpawnBlock() {
-		int blockType = Random.Range(0, blockData.Count);
+		if (currentRNGBucket.Count <= 1) {
+			FillRngBucket();
+		}
+		int blockType = Random.Range(0, currentRNGBucket.Count);
 
 		GameObject blockGameObject = new GameObject($"Block_{blockNum}_('{blockType}')");
 		Block b = blockGameObject.AddComponent<Block>();
-		var data = blockData[blockType];
+		var data = currentRNGBucket[blockType];
+
+		currentRNGBucket.RemoveAt(blockType);
 
 		//we need to move it so it leaves the area, so find how wide it is if we assume moving from left to right
 		int width = 1;
