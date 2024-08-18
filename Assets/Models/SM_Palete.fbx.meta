@@ -3,7 +3,12 @@ guid: fd6f40c39ffccce40b6437531e294f3f
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Parelte
+    second: {fileID: 2100000, guid: 893a2c9132620464984c345848d402ad, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

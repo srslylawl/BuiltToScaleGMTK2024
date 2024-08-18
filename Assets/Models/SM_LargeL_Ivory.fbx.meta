@@ -3,7 +3,12 @@ guid: 6794bc33ec5a21c4da1dde6623b2de8f
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: ivory
+    second: {fileID: 2100000, guid: 6dea5e63a787a8741919d8f4ee8460fd, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
