@@ -11,7 +11,6 @@ public class GlobalGameloop : MonoBehaviour
     private static int score = 0;
     private static float timer = 60f;
 
-    public TextMeshProUGUI timerUGUI;
     public TextMeshProUGUI scoreUGUI;
 
     private void Awake()
@@ -23,8 +22,7 @@ public class GlobalGameloop : MonoBehaviour
 
     private void Update()
     {
-        timerUGUI.text = timer.ToString("F2");
-        scoreUGUI.text = "Score: " + score;
+        scoreUGUI.text = score + "";
 
         if (timer > 0)
         {
@@ -36,13 +34,10 @@ public class GlobalGameloop : MonoBehaviour
         }
     }
 
-    public static void ResetTimer()
+    public static void FinishRound(int roundScore)
     {
-        timer = 60f;
-    }
-
-    public static void IncreaseScore(int s)
-    {
-        score += s;
+        //roundScore += (int)timer * 5;
+        timer = 30f;
+        score += roundScore;
     }
 }

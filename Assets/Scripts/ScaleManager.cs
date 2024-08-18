@@ -9,13 +9,14 @@ public class ScaleManager : MonoBehaviour
 {
     public GameObject Floor;
     public GameObject Scale;
-    public bool win = false;
+    private bool win = false;
     public BlockData floorLayoutActive;
     private BlockData scaleLayoutActive;
     private List<GameObject> tileList = new();
     private List<GameObject> oldTileList = new();
     public List<BlockData> scaleLayouts = new();
     private HashSet<Transform> blocks = new HashSet<Transform>();
+    private Dictionary<Transform, int> blocksScoreCount = new Dictionary<Transform, int>();
 
     // Start is called before the first frame update
     void Start()
@@ -53,22 +54,42 @@ public class ScaleManager : MonoBehaviour
         //Not working grid positions confusing. Andreas not around to be asked!
         foreach (Vector2Int v2 in scaleLayoutActive.GridPositions)
         {
-            win = !GlobalGrid.PositionFree(v2);
+            GlobalGrid.GridOccupants.TryGetValue(v2, out var occupant);
+            win = occupant != null && !((MonoBehaviour)occupant).CompareTag("Player");
             if (!win) break;
         }
         
 
         if (win)
         {
+            int roundScore = 0;
+
+            blocks.Clear();
             foreach (Vector2Int v2 in scaleLayoutActive.GridPositions)
             {
                 GlobalGrid.GridOccupants.TryGetValue(v2, out var occupant);
-                blocks.Add(((MonoBehaviour)occupant).transform);
+                Transform oc = ((MonoBehaviour)occupant).transform;
+                blocks.Add(oc);
+                if (blocksScoreCount.ContainsKey(oc) && occupant != null) blocksScoreCount[oc]++;
+                else blocksScoreCount.Add(oc, 1);
             }
 
+            foreach(int value in blocksScoreCount.Values)
+            {
+                roundScore += (value * (value + 1) / 2) * 10;
+            }
+
+            int scoreTemp = roundScore;
+            foreach (Vector2Int v2 in floorLayoutActive.GridPositions)
+            {
+                GlobalGrid.GridOccupants.TryGetValue(v2, out var occupant);
+                if (occupant != null && !((MonoBehaviour)occupant).CompareTag("Player")) { roundScore -= 20; }
+            }
+
+            if (roundScore == scoreTemp) roundScore += 200;
+
             //Do Score Stuff
-            GlobalGameloop.IncreaseScore(123);
-            GlobalGameloop.ResetTimer();
+            GlobalGameloop.FinishRound(roundScore);
 
             //Destroy Blocks for now. crane them later
             foreach (Transform block in blocks)
@@ -104,13 +125,13 @@ public class ScaleManager : MonoBehaviour
 
         foreach (Vector2Int v2 in scaleLayoutActive.GridPositions)
         {
-            tileList.Add(Instantiate(Scale, new Vector3(v2.x, 0.01f, v2.y) + new Vector3(1f, 0, 1f) / 2f, Quaternion.Euler(90, 0, 0), this.transform));
+            tileList.Add(Instantiate(Scale, new Vector3(v2.x, 0.01f, v2.y) + new Vector3(1f, 0, 1f) / 2f, Quaternion.Euler(-90, 0, 0), this.transform));
             floorLayoutActive.GridPositions.Remove(v2);
         }
 
         foreach (Vector2Int v2 in floorLayoutActive.GridPositions)
         {
-            tileList.Add(Instantiate(Floor, new Vector3(v2.x, 0.01f, v2.y) + new Vector3(1f, 0, 1f) / 2f, Quaternion.Euler(90, 0, 0), this.transform));
+            tileList.Add(Instantiate(Floor, new Vector3(v2.x, 0.01f, v2.y) + new Vector3(1f, 0, 1f) / 2f, Quaternion.Euler(-90, 0, 0), this.transform));
         }
 
         foreach (GameObject obj in oldTileList) StartCoroutine(Flip(obj, obj.transform.eulerAngles.x));

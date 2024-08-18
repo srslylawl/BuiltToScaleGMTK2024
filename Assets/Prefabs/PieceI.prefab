@@ -43,7 +43,7 @@ GameObject:
   - component: {fileID: 2610614778711838430}
   m_Layer: 8
   m_Name: PieceI
-  m_TagString: Untagged
+  m_TagString: Block
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -83,7 +83,6 @@ MonoBehaviour:
   movementSpeed: 5
   rotationSpeed: 180
   blockDestinationPoint: {fileID: 5247344493863151966}
-  blockLayout: 
 --- !u!1001 &835703032614096794
 PrefabInstance:
   m_ObjectHideFlags: 0
