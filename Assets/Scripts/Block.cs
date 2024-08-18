@@ -4,8 +4,6 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 
 public class Block : MonoBehaviour, IGridOccupant {
-
-
 	public List<Vector2Int> Positions { get; private set; }
 	private List<Vector2Int> PreRotationPositions;
 
@@ -19,19 +17,25 @@ public class Block : MonoBehaviour, IGridOccupant {
 
 	private Color mainColor;
 
+	public bool TaggedAsStillSpawning;
+
 	private Vector3 GridToWorldPos(Vector2Int gridPos) {
 		return new Vector3(gridPos.x, 0, gridPos.y);
 	}
-	
+
 	private float EaseExponential(float t) {
 		return t >= 1 ? 1 : 1 - Mathf.Pow(2, -10 * t);
 	}
 
 	private Color highlightColor = new Color(230f / 255f, 255 / 255f, 204 / 255f, 1.0f);
-	
+
 	public void SetHighlight(bool highlight) {
 		foreach (var paletteChild in paletteChildren) {
-			paletteChild.GetComponent<MeshRenderer>().material.SetColor("_Color", highlight ? highlightColor : mainColor);
+			//can be destroyed already so we check for null
+			if (!paletteChild) continue;
+			var ren = paletteChild.GetComponent<MeshRenderer>();
+			if (!ren) continue;
+			ren.material.SetColor("_Color", highlight ? highlightColor : mainColor);
 		}
 	}
 
@@ -41,7 +45,7 @@ public class Block : MonoBehaviour, IGridOccupant {
 			bool finished = Math.Abs(interpolationProgress - 1) < 0.00001f;
 			var start = GridToWorldPos(interpolationOrigin);
 			var end = GridToWorldPos(CurrentPosition);
-			
+
 			if (finished) {
 				transform.position = end;
 				interpolationOrigin = CurrentPosition;
@@ -54,7 +58,7 @@ public class Block : MonoBehaviour, IGridOccupant {
 			}
 		}
 	}
-	
+
 	private void StartMoveInterpolation() {
 		interpolationProgress = 0;
 		isMoving = true;
@@ -64,10 +68,10 @@ public class Block : MonoBehaviour, IGridOccupant {
 	public void Init(BlockData blockData, GameObject palettePrefab) {
 		var baseGridPos = new Vector2Int(Mathf.CeilToInt(transform.position.x), Mathf.CeilToInt(transform.position.z));
 		CurrentPosition = baseGridPos;
-		
-		
+
+
 		Positions = new List<Vector2Int>(blockData.GridPositions.Count);
-		
+
 		mainColor = Random.ColorHSV(0f, 1f, 1f, 1f, 0.5f, 1f);
 
 		paletteChildren.Capacity = blockData.GridPositions.Count;
@@ -79,10 +83,11 @@ public class Block : MonoBehaviour, IGridOccupant {
 			go.GetComponent<MeshRenderer>().material.SetColor("_Color", mainColor);
 			paletteChildren.Add(go);
 		}
-		
+
+		TaggedAsStillSpawning = true;
 		//TODO spawn mesh
 	}
-	
+
 	public void Rotate(List<Vector2Int> newPositions) {
 		PreRotationPositions = new List<Vector2Int>(Positions);
 		Positions = newPositions;
@@ -100,7 +105,7 @@ public class Block : MonoBehaviour, IGridOccupant {
 		// transform.position = new Vector3(CurrentPosition.x, 0, CurrentPosition.y);
 		StartMoveInterpolation();
 	}
-	
+
 	public void Move(Vector2Int direction) {
 		for (var i = 0; i < Positions.Count; i++) {
 			Positions[i] = Positions[i] + direction;
@@ -112,11 +117,16 @@ public class Block : MonoBehaviour, IGridOccupant {
 		PerformMove();
 	}
 
+	private void OnDestroy() {
+		GlobalGrid.UnregisterOccupant(this);
+	}
+
 	public void MoveTo(Vector2Int gridPosition) {
 		var originOffset = gridPosition - CurrentPosition;
 		for (var i = 0; i < Positions.Count; i++) {
 			Positions[i] = Positions[i] + originOffset;
 		}
+
 		interpolationOrigin = CurrentPosition;
 		CurrentPosition = gridPosition;
 		PerformMove();

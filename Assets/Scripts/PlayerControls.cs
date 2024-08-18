@@ -72,7 +72,7 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 	private Block highlightedBlock;
 
 	private void HandleHighlighting() {
-		if (GlobalGrid.GridOccupants.TryGetValue(CurrentPosition + Forward, out var toHighlight) && toHighlight is Block blockToHighlight) {
+		if (GlobalGrid.GridOccupants.TryGetValue(CurrentPosition + Forward, out var toHighlight) && toHighlight is Block { TaggedAsStillSpawning: false } blockToHighlight) {
 			if (!highlightedBlock) {
 				blockToHighlight.SetHighlight(true);
 				highlightedBlock = blockToHighlight;
@@ -99,6 +99,7 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 
 		HandleHighlighting();
 
+		//Movement interpolation
 		if (isMoving) {
 			interpolationProgress = Mathf.Clamp(interpolationProgress + Time.deltaTime * movementSpeed, 0, 1);
 			bool finished = Math.Abs(interpolationProgress - 1) < 0.00001f;
@@ -125,12 +126,23 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 
 		bool isGrabbing = highlightedBlock && Input.GetKey(KeyCode.Space);
 
+		bool rotationalInput = Input.GetKeyDown(KeyCode.J) || Input.GetKeyDown(KeyCode.K);
+
+		bool clockwiseRotation = rotationalInput && Input.GetKeyDown(KeyCode.K);
+
+		if (rotationalInput) {
+			if (GlobalGrid.TryRotate(highlightedBlock, CurrentPosition, clockwiseRotation)) {
+				RotateCharacter(clockwiseRotation);
+				return;
+			}
+		}
+
 		if (hasHorizontalInput && Input.GetButtonDown("Horizontal")) {
-			bool clockWise = Math.Abs(playerInputAxis.x - 1) < 0.00001f;
+			// bool clockWise = Math.Abs(playerInputAxis.x - 1) < 0.00001f;
+			var direction = Math.Sign(playerInputAxis.x) * Vector2Int.right;
 			if (!isGrabbing) {
 				// RotateCharacter(clockWise);
 				// Forward = 
-				var direction = Math.Sign(playerInputAxis.x) * Vector2Int.right;
 				RotateToForwardAxis(direction);
 				if (GlobalGrid.TryMove(this, direction, false)) {
 					return;
@@ -138,10 +150,14 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 			}
 			else {
 				//is grabbing
-				if (GlobalGrid.TryRotate(highlightedBlock, CurrentPosition, clockWise)) {
-					RotateCharacter(clockWise);
+				List<IGridOccupant> occupants = new() { this, highlightedBlock };
+				if (GlobalGrid.TryMove(occupants, direction, true)) {
 					return;
 				}
+				// if (GlobalGrid.TryRotate(highlightedBlock, CurrentPosition, clockWise)) {
+				// 	RotateCharacter(clockWise);
+				// 	return;
+				// }
 			}
 
 			// var direction = Math.Sign(playerInputAxis.x) * Vector2Int.right;
@@ -158,7 +174,8 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 		}
 
 		if (hasVerticalInput && Input.GetButtonDown("Vertical")) {
-			var direction = Math.Sign(playerInputAxis.y) * Forward;
+			var direction = Math.Sign(playerInputAxis.y) * Vector2Int.up;
+			// var direction = Math.Sign(playerInputAxis.y) * Forward;
 
 			if (isGrabbing) {
 				List<IGridOccupant> occupants = new() { this, highlightedBlock };
@@ -167,7 +184,7 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 				}
 			}
 			else {
-				direction = Math.Sign(playerInputAxis.y) * Vector2Int.up;
+				// direction = Math.Sign(playerInputAxis.y) * Vector2Int.up;
 				RotateToForwardAxis(direction);
 				if (GlobalGrid.TryMove(this, direction, false)) {
 					return;
@@ -343,5 +360,19 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 		}
 
 		return null;
+	}
+
+	private void OnDrawGizmos() {
+		//Draw grid bounds
+		Gizmos.color = Color.magenta;
+		//bot left corner to top left corner
+		Gizmos.DrawLine(new Vector3(-GlobalGrid.BoundsSize, 0, -GlobalGrid.BoundsSize), new Vector3(-GlobalGrid.BoundsSize, 0, GlobalGrid.BoundsSize));
+		//top left to top right
+		Gizmos.DrawLine(new Vector3(-GlobalGrid.BoundsSize, 0, GlobalGrid.BoundsSize), new Vector3(GlobalGrid.BoundsSize, 0, GlobalGrid.BoundsSize));
+		//top right to bot right
+		Gizmos.DrawLine(new Vector3(GlobalGrid.BoundsSize, 0, GlobalGrid.BoundsSize), new Vector3(GlobalGrid.BoundsSize, 0, -GlobalGrid.BoundsSize));
+		//bot right to bot left
+		Gizmos.DrawLine(new Vector3(GlobalGrid.BoundsSize, 0, -GlobalGrid.BoundsSize), new Vector3(-GlobalGrid.BoundsSize, 0, -GlobalGrid.BoundsSize));
+
 	}
 }

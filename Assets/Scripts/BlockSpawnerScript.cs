@@ -45,8 +45,10 @@ public class BlockSpawnerScript : MonoBehaviour {
 
 	IEnumerator MoveBlockFromSpawn(IGridOccupant block, int count) {
 		for (int i = 0; i < count; i++) {
-			yield return new WaitForSeconds(1.0f);
-			GlobalGrid.TryMove(block, Vector2Int.right);
+			yield return new WaitForSeconds(0.5f);
+			GlobalGrid.TryMove(block, Vector2Int.right, true, true);
 		}
+
+		((Block)block).TaggedAsStillSpawning = false;
 	}
 }
