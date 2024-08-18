@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83ea9dbb33014763909331adaa5d1509, type: 3}
+  m_Name: Block_1x2
+  m_EditorClassIdentifier: 
+  GridLayoutData: {fileID: 11400000, guid: d9dfb1910a4a17e4c8a570fa96deeff3, type: 2}
+  MeshVariants:
+  - {fileID: 919132149155446097, guid: cd4d357fda50d934885a179070e602d0, type: 3}

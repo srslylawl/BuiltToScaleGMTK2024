@@ -10,11 +10,11 @@ public class ScaleManager : MonoBehaviour
     public GameObject Floor;
     public GameObject Scale;
     private bool win = false;
-    public BlockData floorLayoutActive;
-    private BlockData scaleLayoutActive;
+    public GridLayoutData floorLayoutActive;
+    private GridLayoutData scaleLayoutActive;
     private List<GameObject> tileList = new();
     private List<GameObject> oldTileList = new();
-    public List<BlockData> scaleLayouts = new();
+    public List<GridLayoutData> scaleLayouts = new();
     private HashSet<Transform> blocks = new HashSet<Transform>();
     private Dictionary<Transform, int> blocksScoreCount = new Dictionary<Transform, int>();
 

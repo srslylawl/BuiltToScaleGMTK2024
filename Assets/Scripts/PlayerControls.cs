@@ -23,6 +23,8 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 	private bool isMoving;
 
 
+
+
 	public List<Vector2Int> Positions => new() { CurrentPosition };
 
 	private Vector2Int Forward = Vector2Int.left;
@@ -41,8 +43,8 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 		StartMoveInterpolation();
 	}
 
-	public void Rotate(List<Vector2Int> newPositions) {
-		//do nothing
+	public void Rotate(List<Vector2Int> newPositions, bool clockWise) {
+		RotateCharacter(clockWise);
 	}
 
 	Vector3 GridToWorldPos(Vector2Int gridPos) {
@@ -126,9 +128,13 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 
 		bool isGrabbing = highlightedBlock && Input.GetKey(KeyCode.Space);
 
-		bool rotationalInput = Input.GetKeyDown(KeyCode.J) || Input.GetKeyDown(KeyCode.K);
+		bool cclockWiseInput = Input.GetKeyDown(KeyCode.J) || Input.GetKeyDown(KeyCode.Q);
 
-		bool clockwiseRotation = rotationalInput && Input.GetKeyDown(KeyCode.K);
+		bool clockwiseInput = Input.GetKeyDown(KeyCode.K) || Input.GetKeyDown(KeyCode.E);
+
+		bool rotationalInput = cclockWiseInput || clockwiseInput;
+
+		bool clockwiseRotation = rotationalInput && clockwiseInput;
 
 		if (rotationalInput && highlightedBlock) {
 			if (GlobalGrid.TryRotate(highlightedBlock, CurrentPosition, clockwiseRotation)) {

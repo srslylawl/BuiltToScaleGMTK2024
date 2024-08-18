@@ -9,10 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 705cbb64e846403797768725959c14fc, type: 3}
-  m_Name: Random 1x2
+  m_Script: {fileID: 11500000, guid: 83ea9dbb33014763909331adaa5d1509, type: 3}
+  m_Name: Block_S_Big
   m_EditorClassIdentifier: 
-  Prefab: {fileID: 0}
-  GridPositions:
-  - {x: 0, y: 0}
-  - {x: 1, y: 0}
+  GridLayoutData: {fileID: 11400000, guid: 6efa87d1221fa6e49b1366eeea7f3d96, type: 2}
+  MeshVariants:
+  - {fileID: 919132149155446097, guid: 8f4f92c65d429b741a65615546926037, type: 3}

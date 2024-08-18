@@ -10,11 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 705cbb64e846403797768725959c14fc, type: 3}
-  m_Name: Random L
+  m_Name: 3x2
   m_EditorClassIdentifier: 
-  Prefab: {fileID: 0}
   GridPositions:
   - {x: 0, y: 0}
+  - {x: 0, y: 1}
   - {x: 1, y: 0}
-  - {x: 2, y: 0}
   - {x: 1, y: 1}
+  - {x: 2, y: 1}
+  - {x: 2, y: 0}

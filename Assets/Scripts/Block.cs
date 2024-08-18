@@ -11,6 +11,7 @@ public class Block : MonoBehaviour, IGridOccupant {
 	private Vector2Int interpolationOrigin { get; set; }
 
 	private List<GameObject> paletteChildren = new();
+	private GameObject paletteObject;
 
 	private bool isMoving;
 	private float interpolationProgress;
@@ -39,6 +40,13 @@ public class Block : MonoBehaviour, IGridOccupant {
 		}
 	}
 
+	// private Vector2Int Forward = Vector2Int.right;
+
+	// private void RotateToForwardAxis(Vector2Int direction) {
+	// 	Forward = direction;
+	// 	transform.rotation = Quaternion.Euler(new Vector3(0, Mathf.Atan2(Forward.x, Forward.y) * Mathf.Rad2Deg + 90, 0));
+	// }
+
 	private void Update() {
 		if (isMoving) {
 			interpolationProgress = Mathf.Clamp(interpolationProgress + Time.deltaTime * 5.0f, 0, 1);
@@ -65,17 +73,17 @@ public class Block : MonoBehaviour, IGridOccupant {
 	}
 
 
-	public void Init(BlockData blockData, GameObject palettePrefab) {
+	public void Init(BlockData blockData, GameObject palettePrefab, int meshVariant) {
 		var baseGridPos = new Vector2Int(Mathf.CeilToInt(transform.position.x), Mathf.CeilToInt(transform.position.z));
 		CurrentPosition = baseGridPos;
 
 
-		Positions = new List<Vector2Int>(blockData.GridPositions.Count);
+		Positions = new List<Vector2Int>(blockData.GridLayoutData.GridPositions.Count);
 
 		mainColor = Random.ColorHSV(0f, 1f, 1f, 1f, 0.5f, 1f);
 
-		paletteChildren.Capacity = blockData.GridPositions.Count;
-		foreach (var blockDataGridPosition in blockData.GridPositions) {
+		paletteChildren.Capacity = blockData.GridLayoutData.GridPositions.Count;
+		foreach (var blockDataGridPosition in blockData.GridLayoutData.GridPositions) {
 			Positions.Add(blockDataGridPosition + baseGridPos);
 			var go = Instantiate(palettePrefab, transform.position + new Vector3(blockDataGridPosition.x, 0, blockDataGridPosition.y), Quaternion.identity,
 				transform);
@@ -84,13 +92,27 @@ public class Block : MonoBehaviour, IGridOccupant {
 			paletteChildren.Add(go);
 		}
 
+		var mesh = blockData.MeshVariants[meshVariant];
+		var paletteParent = new GameObject("RotParent");
+		paletteParent.transform.parent = transform;
+		paletteParent.transform.localPosition = new Vector3(0.5f, 0, 0.5f);
+		paletteObject = Instantiate(mesh, paletteParent.transform, true);
+		paletteObject.transform.localPosition = new Vector3(-0.5f, 0, -0.5f);
+
+
 		TaggedAsStillSpawning = true;
 		//TODO spawn mesh
 	}
 
-	public void Rotate(List<Vector2Int> newPositions) {
+	public void Rotate(List<Vector2Int> newPositions, bool clockWise) {
 		PreRotationPositions = new List<Vector2Int>(Positions);
 		Positions = newPositions;
+		float deg = clockWise ? 90 : -90;
+
+		// var player = FindObjectOfType<PlayerControls>();
+		// transform.Rotate(new Vector3(0, 1.0f, 0), deg);
+		
+		paletteObject.transform.parent.Rotate(new Vector3(0, 1.0f, 0), deg);
 
 		for (int i = 0; i < Positions.Count; i++) {
 			var offset = Positions[i] - CurrentPosition;

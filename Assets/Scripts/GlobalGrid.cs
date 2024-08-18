@@ -6,7 +6,7 @@ using UnityEngine;
 public interface IGridOccupant {
 	public void Move(Vector2Int direction);
 	public void MoveTo(Vector2Int gridPosition);
-	public void Rotate(List<Vector2Int> newPositions);
+	public void Rotate(List<Vector2Int> newPositions, bool clockWise);
 
 	public List<Vector2Int> Positions { get; }
 	public Vector2Int CurrentPosition { get; set; }
@@ -19,7 +19,7 @@ public static class GlobalGrid {
 
 	//can handily pass allowoutofbounds to then just return true
 	private static bool InBounds(Vector2Int position, bool allowOutOfBounds = false) {
-		return allowOutOfBounds || Math.Abs(position.x) < BoundsSize && Math.Abs(position.y) < BoundsSize;
+		return allowOutOfBounds || Math.Abs(position.x) <= BoundsSize && Math.Abs(position.y) <= BoundsSize;
 	}
 
 	public static bool PositionFree(Vector2Int position) {
@@ -64,7 +64,7 @@ public static class GlobalGrid {
 		occupant.CurrentPosition = RotatePoint(occupant.CurrentPosition, origin, clockWise);
 
 		UnregisterOccupant(occupant);
-		occupant.Rotate(rotated);
+		occupant.Rotate(rotated, clockWise);
 		RegisterOccupant(occupant);
 
 		return true;

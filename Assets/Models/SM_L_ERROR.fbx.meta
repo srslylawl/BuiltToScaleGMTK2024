@@ -8,7 +8,7 @@ ModelImporter:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: HardRed
-    second: {fileID: 2100000, guid: d21083d0b11d0ac4392c6c94c9203510, type: 2}
+    second: {fileID: 2100000, guid: 617dc6dabab800a49bdf507a32630174, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

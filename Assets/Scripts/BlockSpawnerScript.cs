@@ -38,12 +38,15 @@ public class BlockSpawnerScript : MonoBehaviour {
 
 		//we need to move it so it leaves the area, so find how wide it is if we assume moving from left to right
 		int width = 1;
-		foreach (var dataGridPosition in data.GridPositions) {
-			width = Math.Max(dataGridPosition.x + 1, width);
+		foreach (var dataGridPosition in data.GridLayoutData.GridPositions) {
+			width = Math.Max(Math.Abs(dataGridPosition.x) + 1, width);
 		}
+		
+		
+		int meshVariant = Random.Range(0, data.MeshVariants.Count);
 
 		blockGameObject.transform.position = transform.position - new Vector3(width, 0, 0);
-		b.Init(data, PalettePrefab);
+		b.Init(data, PalettePrefab, meshVariant);
 
 		StartCoroutine(MoveBlockFromSpawn(b, width));
 	}
