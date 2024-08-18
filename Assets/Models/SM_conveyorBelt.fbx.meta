@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: a54e3a888778d594ab351abfe30ef97d
+guid: 51c091e9fe31721489f6037bc0bc5816
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
@@ -7,8 +7,18 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: lambert1
-    second: {fileID: 2100000, guid: 7e48498c9dbc9534b93a58d775bf6d72, type: 2}
+      name: Ramp
+    second: {fileID: 2100000, guid: 425edaf65cdda2449b93ae690fa07f0b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: RampInner
+    second: {fileID: 2100000, guid: 721850f540dbf814c8936687283e43b0, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Rollers
+    second: {fileID: 2100000, guid: 664e84b1fc498e64dabd26d0097c52a1, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
