@@ -41,7 +41,7 @@ public class GlobalGameloop : MonoBehaviour
         timer = 60f;
     }
 
-    public void IncreaseScore(int s)
+    public static void IncreaseScore(int s)
     {
         score += s;
     }
