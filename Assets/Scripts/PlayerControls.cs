@@ -130,7 +130,7 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 
 		bool clockwiseRotation = rotationalInput && Input.GetKeyDown(KeyCode.K);
 
-		if (rotationalInput) {
+		if (rotationalInput && highlightedBlock) {
 			if (GlobalGrid.TryRotate(highlightedBlock, CurrentPosition, clockwiseRotation)) {
 				RotateCharacter(clockwiseRotation);
 				return;
