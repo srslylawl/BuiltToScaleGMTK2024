@@ -1,8 +1,7 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GlobalGameloop : MonoBehaviour
 {
@@ -12,32 +11,40 @@ public class GlobalGameloop : MonoBehaviour
     private static float timer = 60f;
 
     public TextMeshProUGUI scoreUGUI;
+    public TextMeshProUGUI finalScoreUGUI;
+    public GameObject GameOverObj;
 
-    private void Awake()
-    {
-        if (I) throw new Exception("Duplicate GameLoop Instance");
+    public bool gameOver = false;
 
+    private void Awake() {
+        if (I) Destroy(I.gameObject);
         I = this;
     }
 
-    private void Update()
-    {
+    private void Start() {
         scoreUGUI.text = score + "";
-
-        if (timer > 0)
-        {
-            timer -= Time.deltaTime;
-        }
-        else
-        {
-            Debug.Log("Lose!! Your Score: " + score);
-        }
     }
 
     public static void FinishRound(int roundScore)
     {
-        //roundScore += (int)timer * 5;
         timer = 30f;
         score += roundScore;
+        I.scoreUGUI.text = score + "";
+    }
+
+    private void Update() {
+        if (gameOver) {
+            if (Input.GetKeyDown(KeyCode.R)) {
+                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            }
+        }
+    }
+
+    public static void TriggerGameOver() {
+        // Debug.Log("GAME OVER!");
+        I.GameOverObj.SetActive(true);
+        I.gameOver = true;
+        I.finalScoreUGUI.text = score.ToString();
+
     }
 }

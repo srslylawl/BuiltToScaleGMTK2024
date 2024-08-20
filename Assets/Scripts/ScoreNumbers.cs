@@ -12,11 +12,15 @@ public class ScoreNumbers : MonoBehaviour
     public Vector3 scaleFactor;
     public float lifetime;
     public float posLifetimeVariance;
+    public Vector3 endPosition;
+
 
     private Vector3 startScale;
     private float endLifetime;
 
     private TextMeshProUGUI textGui;
+
+    private Vector3 startPos;
 
     // Start is called before the first frame update
     void Start()
@@ -25,7 +29,10 @@ public class ScoreNumbers : MonoBehaviour
 
         startScale = transform.localScale;
 
-        endLifetime = lifetime + Random.Range(0, posLifetimeVariance);
+        startPos = textGui.rectTransform.anchoredPosition;
+        // Debug.Log("StartPos: " + startPos);
+
+        endLifetime = lifetime + Random.Range(0, posLifetimeVariance) + 0.5f;
         lifetime = 0;
 
         byte rand = (byte)Random.Range(128, 255);
@@ -33,19 +40,19 @@ public class ScoreNumbers : MonoBehaviour
         if (textGui.text.Contains('-'))
         {
             r = 255;
-            g = rand;
-            b = (byte)(255 + 128 - rand);
+            g = 0;
+            b = 0;
         }
         else if(textGui.text.Contains("PERFECT"))
         {
             g = 255;
-            r = rand;
+            r = (byte)Random.Range(0, 128);
             b = (byte)(255 + 128 - rand);
         }
         else
         {
             b = 255;
-            r = rand;
+            r = (byte)Random.Range(0, 128);
             g = (byte)(255 + 128 - rand);
         }
 
@@ -62,6 +69,19 @@ public class ScoreNumbers : MonoBehaviour
         transform.localScale = startScale + newScale;
         textGui.color = new Color(textGui.color.r, textGui.color.g, textGui.color.b, Mathf.Sin(lifetime * Mathf.PI / endLifetime));
 
-        if (lifetime >= endLifetime) Destroy(this.gameObject);
+        var rem = endLifetime - lifetime;
+
+        if (rem <= 1.0f) {
+            float lerp = 1-rem;
+
+            //now lerp to end position
+            if (lerp >= 1) {
+                Destroy(this.gameObject);
+                return;
+            }
+
+            float t = 1- Mathf.Sqrt((1 - Mathf.Pow(lerp, 2)));
+            textGui.rectTransform.anchoredPosition = Vector3.Lerp(startPos, endPosition, t);
+        }
     }
 }

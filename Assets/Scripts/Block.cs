@@ -5,9 +5,9 @@ using Random = UnityEngine.Random;
 
 public class Block : MonoBehaviour, IGridOccupant {
 	public List<Vector2Int> Positions { get; private set; }
-	private List<Vector2Int> PreRotationPositions;
 
 	public Vector2Int CurrentPosition { get; set; }
+
 	private Vector2Int interpolationOrigin { get; set; }
 
 	private List<GameObject> paletteChildren = new();
@@ -39,6 +39,19 @@ public class Block : MonoBehaviour, IGridOccupant {
 			ren.material.SetColor("_Color", highlight ? highlightColor : mainColor);
 		}
 	}
+	
+	public void OnRegister() {
+		if (TaggedAsStillSpawning) return;
+
+		foreach (var vector2Int in Positions) {
+			if (GlobalGrid.InBounds(vector2Int)) return;
+		}
+		
+		//if nothing in bounds, object falls down!
+		Debug.Log("Object fell down!");
+		GlobalGameloop.TriggerGameOver();
+	}
+
 
 	// private Vector2Int Forward = Vector2Int.right;
 
@@ -105,13 +118,9 @@ public class Block : MonoBehaviour, IGridOccupant {
 	}
 
 	public void Rotate(List<Vector2Int> newPositions, bool clockWise) {
-		PreRotationPositions = new List<Vector2Int>(Positions);
 		Positions = newPositions;
 		float deg = clockWise ? 90 : -90;
 
-		// var player = FindObjectOfType<PlayerControls>();
-		// transform.Rotate(new Vector3(0, 1.0f, 0), deg);
-		
 		paletteObject.transform.parent.Rotate(new Vector3(0, 1.0f, 0), deg);
 
 		for (int i = 0; i < Positions.Count; i++) {
@@ -120,7 +129,6 @@ public class Block : MonoBehaviour, IGridOccupant {
 		}
 
 		transform.position = GridToWorldPos(CurrentPosition);
-		// var base = 
 	}
 
 	private void PerformMove() {
@@ -143,14 +151,4 @@ public class Block : MonoBehaviour, IGridOccupant {
 		GlobalGrid.UnregisterOccupant(this);
 	}
 
-	public void MoveTo(Vector2Int gridPosition) {
-		var originOffset = gridPosition - CurrentPosition;
-		for (var i = 0; i < Positions.Count; i++) {
-			Positions[i] = Positions[i] + originOffset;
-		}
-
-		interpolationOrigin = CurrentPosition;
-		CurrentPosition = gridPosition;
-		PerformMove();
-	}
 }

@@ -10,7 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 705cbb64e846403797768725959c14fc, type: 3}
-  m_Name: Scale 7x7 Layout 10
+  m_Name: Scale 7x7 Z thing
   m_EditorClassIdentifier: 
-  Prefab: {fileID: 0}
-  GridPositions: []
+  GridPositions:
+  - {x: 3, y: 3}
+  - {x: 1, y: 1}
+  - {x: 2, y: 1}
+  - {x: 3, y: 1}
+  - {x: 4, y: 1}
+  - {x: 2, y: 5}
+  - {x: 3, y: 5}
+  - {x: 4, y: 5}
+  - {x: 5, y: 5}
+  - {x: 3, y: 2}
+  - {x: 3, y: 4}
+  - {x: 2, y: 2}
+  - {x: 4, y: 4}

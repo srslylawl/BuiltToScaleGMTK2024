@@ -16,13 +16,13 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 
 	private int[,] playerBlockLayout = new int[7, 7];
 
-
+	
 	public Vector2Int CurrentPosition { get; set; } //where we actually are on the grid
+
+
 	private Vector2Int interpolationOrigin; //where we are interpolating from
 	private float interpolationProgress;
 	private bool isMoving;
-
-
 
 
 	public List<Vector2Int> Positions => new() { CurrentPosition };
@@ -36,11 +36,13 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 		CurrentPosition += direction;
 		StartMoveInterpolation();
 	}
-
-	public void MoveTo(Vector2Int gridPosition) {
-		interpolationOrigin = CurrentPosition;
-		CurrentPosition = gridPosition;
-		StartMoveInterpolation();
+	
+	
+	public void OnRegister() {
+		if (!GlobalGrid.InBounds(CurrentPosition)) {
+			Debug.Log("Player is off grid! Game over!");
+			GlobalGameloop.TriggerGameOver();
+		}
 	}
 
 	public void Rotate(List<Vector2Int> newPositions, bool clockWise) {
@@ -58,8 +60,6 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 		if (!GlobalGrid.TryMove(this, Vector2Int.zero)) {
 			Debug.LogException(new Exception("Unable to register player position on spawn - overlaps?"));
 		}
-
-		// ResetRotationLayout();
 	}
 
 	private void StartMoveInterpolation() {
@@ -74,7 +74,8 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 	private Block highlightedBlock;
 
 	private void HandleHighlighting() {
-		if (GlobalGrid.GridOccupants.TryGetValue(CurrentPosition + Forward, out var toHighlight) && toHighlight is Block { TaggedAsStillSpawning: false } blockToHighlight) {
+		if (GlobalGrid.GridOccupants.TryGetValue(CurrentPosition + Forward, out var toHighlight) &&
+			toHighlight is Block { TaggedAsStillSpawning: false } blockToHighlight) {
 			if (!highlightedBlock) {
 				blockToHighlight.SetHighlight(true);
 				highlightedBlock = blockToHighlight;
@@ -107,6 +108,8 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 			bool finished = Math.Abs(interpolationProgress - 1) < 0.00001f;
 			var start = GridToWorldPos(interpolationOrigin);
 			var end = GridToWorldPos(CurrentPosition);
+			
+			Shader.SetGlobalVector("_PlayerPos", new Vector4(transform.position.x - 0.5f, transform.position.z - 0.5f, 0, 0));
 
 			if (finished) {
 				transform.position = end;
@@ -119,6 +122,8 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 				// return;
 			}
 		}
+
+		if (GlobalGameloop.I.gameOver) return;
 
 		// bool hasRotationInput = Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.RightShift);
 		Vector2 playerInputAxis = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
@@ -379,6 +384,5 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 		Gizmos.DrawLine(new Vector3(GlobalGrid.BoundsSize, 0, GlobalGrid.BoundsSize), new Vector3(GlobalGrid.BoundsSize, 0, -GlobalGrid.BoundsSize));
 		//bot right to bot left
 		Gizmos.DrawLine(new Vector3(GlobalGrid.BoundsSize, 0, -GlobalGrid.BoundsSize), new Vector3(-GlobalGrid.BoundsSize, 0, -GlobalGrid.BoundsSize));
-
 	}
 }

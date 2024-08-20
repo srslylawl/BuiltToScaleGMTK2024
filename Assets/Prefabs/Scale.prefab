@@ -44,16 +44,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7f21caebf44e53429ad6e99ff75b540, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Floor: {fileID: 4398467258916848895, guid: b28d553051d15b2449321ae9b3e4b223, type: 3}
-  Scale: {fileID: 2637697667975546295, guid: 2ff64a42561ea2341b7ae09d700bd346, type: 3}
+  Floor: {fileID: 12544670453179787, guid: d93ddd32f5b2bd84eaf4577cdba66ded, type: 3}
+  Scale: {fileID: 7798767063732651326, guid: 795282e71ce3a344288db6cc595adbf4, type: 3}
   Canvas: {fileID: 0}
   ScoreNum: {fileID: 3845240766006452934, guid: 796a3213bb0196f4f8305a33984b22dc, type: 3}
-  PerfectPlay: {fileID: 0}
+  PerfectPlay: {fileID: 919132149155446097, guid: 94381cf1fb970a840bd74d2d6614fa5b, type: 3}
+  CircleAnimTime: 1
+  groundMat: {fileID: 2100000, guid: 9d37897ac51553c489f00b3a5e5cc501, type: 2}
   scoresList: []
   floorLayoutActive: {fileID: 11400000, guid: 4432a5a437690684fa612ec1e6abcf92, type: 2}
   scaleLayouts:
-  - {fileID: 11400000, guid: e4a45eb03ad7e1d4a8a85bd4fb1e1b89, type: 2}
-  - {fileID: 11400000, guid: 61d77b23bd663154998c7c971547bbb2, type: 2}
-  - {fileID: 11400000, guid: 3dde281b7fd203844aa988f562f6c0f8, type: 2}
   - {fileID: 11400000, guid: 27abe532433ae4846a44aa18a1a1492d, type: 2}
   - {fileID: 11400000, guid: 2fe3718e495a91c40821290c083f3d28, type: 2}
+  - {fileID: 11400000, guid: db9d4b5b2ad5c064f876c191e32387d0, type: 2}
+  - {fileID: 11400000, guid: 21231f0ceeb15374fb4f8d0c4aeed9fd, type: 2}
+  - {fileID: 11400000, guid: 42cab556664e6894c8f55a614636d21a, type: 2}
+  - {fileID: 11400000, guid: 61d77b23bd663154998c7c971547bbb2, type: 2}
+  - {fileID: 11400000, guid: e4a45eb03ad7e1d4a8a85bd4fb1e1b89, type: 2}
+  - {fileID: 11400000, guid: 11a136272920a2445b561714e56c1b7f, type: 2}
+  - {fileID: 11400000, guid: 3dde281b7fd203844aa988f562f6c0f8, type: 2}

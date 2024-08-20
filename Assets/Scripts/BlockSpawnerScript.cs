@@ -10,10 +10,14 @@ public class BlockSpawnerScript : MonoBehaviour {
 
 	private Timer spawnTimer;
 
+	private float lastSpawnTimer;
+
+	private float nextSpawnTimer;
+
 	[SerializeField] public GameObject PalettePrefab;
 	[SerializeField] public List<BlockData> blockData = new();
 
-
+	private bool readyToSpawn = true;
 	private List<BlockData> currentRNGBucket = new();
 
 	// Start is called before the first frame update
@@ -21,14 +25,26 @@ public class BlockSpawnerScript : MonoBehaviour {
 		//Call BlockSpawn Methode after time
 		// Invoke(nameof(SpawnBlock), 0 + Random.Range(-spawnTimeVariance, spawnTimeVariance));
 		spawnTimer = new Timer(timeBetweenSpawns, true);
+		nextSpawnTimer = timeBetweenSpawns;
 	}
 
 	private int blockNum = 0;
+	private int spawns = 0;
 
 	private void Update() {
-		if (spawnTimer) {
+
+		if (Input.GetKey(KeyCode.LeftShift)) {
+			nextSpawnTimer = 1f;
+		}
+		
+		if (spawnTimer && readyToSpawn) {
 			SpawnBlock();
-			spawnTimer = new Timer(timeBetweenSpawns);
+			spawns++;
+			var spawnTime = nextSpawnTimer;
+			lastSpawnTimer = spawnTime;
+			spawnTimer = new Timer(spawnTime);
+			nextSpawnTimer = Mathf.Max(timeBetweenSpawns - 0.05f * spawns, 1f);
+			Debug.Log("Nextspawntimer: " +nextSpawnTimer);
 		}
 	}
 
@@ -66,11 +82,25 @@ public class BlockSpawnerScript : MonoBehaviour {
 	}
 
 	IEnumerator MoveBlockFromSpawn(IGridOccupant block, int count) {
-		for (int i = 0; i < count; i++) {
-			yield return new WaitForSeconds(0.5f);
-			GlobalGrid.TryMove(block, Vector2Int.right, true, true);
+		readyToSpawn = false;
+		float spawnTimer = 0;
+		int remaining = count;
+		while (true){
+			if(!GlobalGameloop.I.gameOver) spawnTimer += Time.deltaTime;
+			
+			
+			if (spawnTimer >= Math.Min(nextSpawnTimer / count, 1.0f)) {
+				GlobalGrid.TryMove(block, Vector2Int.right, true, true);
+				spawnTimer = 0;
+				remaining--;
+
+				if (remaining == 0) break;
+			}
+
+			yield return null;
 		}
 
 		((Block)block).TaggedAsStillSpawning = false;
+		readyToSpawn = true;
 	}
 }
