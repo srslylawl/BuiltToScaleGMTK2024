@@ -22,9 +22,13 @@ public class ScaleManager : MonoBehaviour
     private HashSet<Transform> blocks = new HashSet<Transform>();
     private Dictionary<Transform, int> blocksScoreCount = new Dictionary<Transform, int>();
 
+    private Vector2Int thisPosOffset;
+
     // Start is called before the first frame update
     void Start()
     {
+        thisPosOffset = new Vector2Int((int)this.transform.position.x, (int)this.transform.position.z);
+
         floorLayoutActive.GridPositions.Clear();
         for(int x = 0; x < 7; x++)
         {
@@ -38,13 +42,13 @@ public class ScaleManager : MonoBehaviour
         
         foreach (Vector2Int v2 in scaleLayoutActive.GridPositions)
         {
-            tileList.Add(Instantiate(Scale, new Vector3(v2.x, 0.01f, v2.y) + new Vector3(1f, 0, 1f) / 2f, Quaternion.Euler(90, 0, 0), this.transform));
+            tileList.Add(Instantiate(Scale, new Vector3(v2.x, 0f, v2.y) + this.transform.position, Quaternion.Euler(0, 0, 0), this.transform));
             floorLayoutActive.GridPositions.Remove(v2);
         }
 
         foreach (Vector2Int v2 in floorLayoutActive.GridPositions)
         {
-            tileList.Add(Instantiate(Floor, new Vector3(v2.x, 0.01f, v2.y) + new Vector3(1f, 0, 1f) / 2f, Quaternion.Euler(90, 0, 0), this.transform));
+            tileList.Add(Instantiate(Floor, new Vector3(v2.x, 0f, v2.y) + this.transform.position, Quaternion.Euler(0, 0, 0), this.transform));
         }
 
         Invoke("CheckForWin", 1f);
@@ -56,7 +60,7 @@ public class ScaleManager : MonoBehaviour
 
         foreach (Vector2Int v2 in scaleLayoutActive.GridPositions)
         {
-            GlobalGrid.GridOccupants.TryGetValue(v2, out var occupant);
+            GlobalGrid.GridOccupants.TryGetValue(v2 + thisPosOffset, out var occupant);
             win = occupant != null && !((MonoBehaviour)occupant).CompareTag("Player");
             if (!win) break;
         }
@@ -66,10 +70,12 @@ public class ScaleManager : MonoBehaviour
         {
             int roundScore = 0;
 
+            scoresList.Clear();
+
             blocks.Clear();
             foreach (Vector2Int v2 in scaleLayoutActive.GridPositions)
             {
-                GlobalGrid.GridOccupants.TryGetValue(v2, out var occupant);
+                GlobalGrid.GridOccupants.TryGetValue(v2 + thisPosOffset, out var occupant);
                 Transform oc = ((MonoBehaviour)occupant).transform;
                 blocks.Add(oc);
                 if (blocksScoreCount.ContainsKey(oc) && occupant != null) blocksScoreCount[oc]++;
@@ -77,7 +83,7 @@ public class ScaleManager : MonoBehaviour
 
                 if (occupant != null)
                 {
-                    Vector3 screenPos = Camera.main.WorldToScreenPoint(new Vector3(v2.x, 0, v2.y));
+                    Vector3 screenPos = Camera.main.WorldToScreenPoint(new Vector3(v2.x + thisPosOffset.x, 0, v2.y + thisPosOffset.y));
                     GameObject sn = Instantiate(ScoreNum, screenPos, Quaternion.identity, Canvas.transform);
                     sn.GetComponent<TextMeshProUGUI>().text = "+" + blocksScoreCount[oc] * 10;
                     sn.SetActive(false);
@@ -93,11 +99,11 @@ public class ScaleManager : MonoBehaviour
             int scoreTemp = roundScore;
             foreach (Vector2Int v2 in floorLayoutActive.GridPositions)
             {
-                GlobalGrid.GridOccupants.TryGetValue(v2, out var occupant);
+                GlobalGrid.GridOccupants.TryGetValue(v2 + thisPosOffset, out var occupant);
                 if (occupant != null && !((MonoBehaviour)occupant).CompareTag("Player"))
                 {
                     roundScore -= 20;
-                    Vector3 screenPos = Camera.main.WorldToScreenPoint(new Vector3(v2.x, 0, v2.y));
+                    Vector3 screenPos = Camera.main.WorldToScreenPoint(new Vector3(v2.x + thisPosOffset.x, 0, v2.y + thisPosOffset.y));
                     GameObject sn = Instantiate(ScoreNum, screenPos, Quaternion.identity, Canvas.transform);
                     sn.GetComponent<TextMeshProUGUI>().text = "-20";
                     sn.SetActive(false);
@@ -161,30 +167,31 @@ public class ScaleManager : MonoBehaviour
 
         foreach (Vector2Int v2 in scaleLayoutActive.GridPositions)
         {
-            tileList.Add(Instantiate(Scale, new Vector3(v2.x, 0.01f, v2.y) + new Vector3(1f, 0, 1f) / 2f, Quaternion.Euler(-90, 0, 0), this.transform));
+            GameObject obj = Instantiate(Scale, new Vector3(v2.x, 0f, v2.y) + this.transform.position, Quaternion.identity, this.transform);
+            tileList.Add(obj);
             floorLayoutActive.GridPositions.Remove(v2);
         }
 
         foreach (Vector2Int v2 in floorLayoutActive.GridPositions)
         {
-            tileList.Add(Instantiate(Floor, new Vector3(v2.x, 0.01f, v2.y) + new Vector3(1f, 0, 1f) / 2f, Quaternion.Euler(-90, 0, 0), this.transform));
+            GameObject obj = Instantiate(Floor, new Vector3(v2.x, 0f, v2.y) + this.transform.position, Quaternion.identity, this.transform);
+            tileList.Add(obj);
         }
 
         foreach (GameObject obj in oldTileList) StartCoroutine(Flip(obj, obj.transform.eulerAngles.x));
-        foreach (GameObject obj in tileList) StartCoroutine(Flip(obj, obj.transform.eulerAngles.x));
+        //foreach (GameObject obj in tileList) StartCoroutine(Flip(obj, obj.transform.eulerAngles.x));
     }
 
     IEnumerator Flip(GameObject flip, float startX)
     {
-        Debug.Log(startX);
-        for (float rotation = 0f; rotation <= 180; rotation += 360f*Time.deltaTime)
+        for (float rotation = 0f; rotation <= 180; rotation += 360f * Time.deltaTime)
         {
             flip.transform.eulerAngles = new Vector3(startX + rotation, 0, 0);
             yield return null;
         }
 
         flip.transform.eulerAngles = new Vector3(startX + 180f, 0, 0);
-        if(startX + 180f == 270f) Destroy(flip);
+        if (startX == 0) Destroy(flip);
 
     }
 }
