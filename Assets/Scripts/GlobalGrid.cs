@@ -11,6 +11,8 @@ public interface IGridOccupant {
 	public Vector2Int CurrentPosition { get; set; }
 
 	public void OnRegister();
+
+	public void OnDestroy(); //they need to unregister themselves when destroyed
 }
 
 public static class GlobalGrid {

@@ -52,6 +52,10 @@ public class Block : MonoBehaviour, IGridOccupant {
 		GlobalGameloop.TriggerGameOver();
 	}
 
+	public void OnDestroy() {
+		GlobalGrid.UnregisterOccupant(this);
+	}
+
 
 	// private Vector2Int Forward = Vector2Int.right;
 
@@ -145,10 +149,6 @@ public class Block : MonoBehaviour, IGridOccupant {
 		CurrentPosition += direction;
 
 		PerformMove();
-	}
-
-	private void OnDestroy() {
-		GlobalGrid.UnregisterOccupant(this);
 	}
 
 }

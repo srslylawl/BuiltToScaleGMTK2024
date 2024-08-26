@@ -255,122 +255,8 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 		transform.rotation = Quaternion.Euler(new Vector3(0, Mathf.Atan2(Forward.x, Forward.y) * Mathf.Rad2Deg + 90, 0));
 	}
 
-// Update is called once per frame
-	void FixedUpdate() {
-		//Apply InputChanges in FixedUpdate
-
-		//Move on grid to destination
-		// this.transform.position = Vector3.MoveTowards(this.transform.position, playerDestinationPoint.position, Time.fixedDeltaTime * movementSpeed);
-
-		// //Rotate
-		// if (Vector3.Distance(this.transform.eulerAngles, playerDestinationPoint.eulerAngles) >= 0.1) {
-		// 	//Apply rotation
-		// 	if (rotatingRight)
-		// 		this.transform.RotateAround(playerDestinationPoint.position, Vector3.up, Time.fixedDeltaTime * rotationSpeed);
-		// 	else
-		// 		this.transform.RotateAround(playerDestinationPoint.position, Vector3.down, Time.fixedDeltaTime * rotationSpeed);
-		//
-		// 	//Check for collision during rotation
-		// 	if (CheckRotationCollisions()) {
-		// 		//Reverse rotation and destination back to before it was set
-		// 		if (rotatingRight) playerDestinationPoint.eulerAngles -= Vector3.up * 90;
-		// 		else playerDestinationPoint.eulerAngles += Vector3.up * 90;
-		// 		rotatingRight = !rotatingRight;
-		// 	}
-		// }
-	}
-
-	// bool CheckForCollisionSphereTowards(Vector3 direction) {
-	// 	bool collision = false;
-	//
-	// 	Vector3 heightOffset = Vector3.down * 0.5f;
-	// 	for (int x = 0; x < playerBlockLayout.GetLength(0); x++) {
-	// 		for (int z = 0; z < playerBlockLayout.GetLength(1); z++) {
-	// 			if (playerBlockLayout[x, z] == 1) {
-	// 				collision = Physics.CheckSphere(
-	// 					// playerDestinationPoint.position + direction + heightOffset + this.transform.right * (x - 3) + this.transform.forward * (z - 3), 0.2f,
-	// 					// layermask);
-	// 			}
-	//
-	// 			if (collision) {
-	// 				return true;
-	// 			}
-	// 		}
-	// 	}
-	//
-	// 	return false;
-	// }
-
-	void ResetRotationLayout() {
-		for (int x = 0; x < playerBlockLayout.GetLength(0); x++) {
-			for (int z = 0; z < playerBlockLayout.GetLength(1); z++) {
-				playerBlockLayout[x, z] = 0;
-			}
-		}
-
-		playerBlockLayout[3, 3] = 1;
-	}
-
-	void SetRotationLayout(Transform blockToCompare) {
-		Transform compareBlock = null;
-		for (int x = 0; x < playerBlockLayout.GetLength(0); x++) {
-			for (int z = 0; z < playerBlockLayout.GetLength(1); z++) {
-				compareBlock = CheckForBlockAt(this.transform.position + this.transform.right * (x - 3) + this.transform.forward * (z - 3));
-
-				if (compareBlock != null) {
-					if (compareBlock.parent == blockToCompare) {
-						playerBlockLayout[x, z] = 1;
-					}
-				}
-			}
-		}
-
-		string output;
-
-		for (int x = 0; x < playerBlockLayout.GetLength(0); x++) {
-			output = "";
-			for (int z = 0; z < playerBlockLayout.GetLength(1); z++) {
-				output += playerBlockLayout[x, z] + " ";
-			}
-		}
-	}
-
-	bool CheckRotationCollisions() {
-		bool colliding = false;
-
-		for (int x = 0; x < playerBlockLayout.GetLength(0); x++) {
-			for (int z = 0; z < playerBlockLayout.GetLength(1); z++) {
-				if (playerBlockLayout[x, z] == 1) {
-					colliding = CheckForCollisionBoxAt(this.transform.position + this.transform.right * (x - 3) + this.transform.forward * (z - 3));
-					if (colliding) return true;
-				}
-			}
-		}
-
-		return false;
-	}
-
-	bool CheckForCollisionBoxAt(Vector3 location) {
-		return Physics.CheckBox(location, Vector3.one * 0.4f, this.transform.rotation, layermask);
-	}
-
-	void SetLayer(GameObject gaObjToSet, int lm) {
-		gaObjToSet.layer = lm;
-		foreach (Transform child in gaObjToSet.transform) {
-			if (child != null) {
-				child.gameObject.layer = lm;
-			}
-		}
-	}
-
-	Transform CheckForBlockAt(Vector3 location) {
-		Vector3 heightOffset = Vector3.down * 0.5f;
-		Collider[] colliders = Physics.OverlapSphere(location + heightOffset, 0.2f, LayerMask.GetMask("Block"));
-		if (colliders.Length > 0) {
-			return colliders[0].transform;
-		}
-
-		return null;
+	public void OnDestroy() {
+		GlobalGrid.UnregisterOccupant(this);
 	}
 
 	private void OnDrawGizmos() {
@@ -384,5 +270,12 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 		Gizmos.DrawLine(new Vector3(GlobalGrid.BoundsSize, 0, GlobalGrid.BoundsSize), new Vector3(GlobalGrid.BoundsSize, 0, -GlobalGrid.BoundsSize));
 		//bot right to bot left
 		Gizmos.DrawLine(new Vector3(GlobalGrid.BoundsSize, 0, -GlobalGrid.BoundsSize), new Vector3(-GlobalGrid.BoundsSize, 0, -GlobalGrid.BoundsSize));
+
+		//Gizmos.color = new Color(0, 1.0f, 0, 0.5f);
+		
+		//render cube for every occupied grid cell
+		// foreach (var (position, value) in GlobalGrid.GridOccupants) {
+		// 	// Gizmos.DrawCube(new Vector3(position.x + 0.5f, 0, position.y + 0.5f), Vector3.one);
+		// }
 	}
 }
