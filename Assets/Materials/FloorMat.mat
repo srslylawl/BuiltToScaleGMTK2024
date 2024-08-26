@@ -82,7 +82,7 @@ Material:
     - _ColorTimeScale: 0.2
     - _CurrentCircleSize: 1.2
     - _CurrentCircleVariance: 0.05
-    - _CurrentScaleCircleSize: 0.0000014007092
+    - _CurrentScaleCircleSize: 0
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DistanceScale: 1.32

@@ -44,7 +44,7 @@ public class BlockSpawnerScript : MonoBehaviour {
 			lastSpawnTimer = spawnTime;
 			spawnTimer = new Timer(spawnTime);
 			nextSpawnTimer = Mathf.Max(timeBetweenSpawns - 0.05f * spawns, 1f);
-			Debug.Log("Nextspawntimer: " +nextSpawnTimer);
+			// Debug.Log("Nextspawntimer: " +nextSpawnTimer);
 		}
 	}
 

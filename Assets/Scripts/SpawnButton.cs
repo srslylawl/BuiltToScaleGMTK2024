@@ -21,6 +21,10 @@ using UnityEngine;
 			// throw new NotImplementedException();
 		}
 
+		public void OnDestroy() {
+			GlobalGrid.UnregisterOccupant(this);
+		}
+
 
 		private void Start() {
 			CurrentPosition = new Vector2Int(Mathf.FloorToInt(transform.position.x), Mathf.FloorToInt(transform.position.z));
