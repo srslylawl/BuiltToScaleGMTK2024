@@ -5,12 +5,14 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 
 public class BlockSpawnerScript : MonoBehaviour {
-	public float timeBetweenSpawns = 5f;
+	private float timeBetweenSpawns = 10f;
+	private float ReduceSpawnTimeEveryNSeconds = 5f;
+	private float SpawnTimeReduction = 0.05f;
 	// public int spawnTimeVariance;
 
 	private Timer spawnTimer;
 
-	private float lastSpawnTimer;
+	// private float lastSpawnTimer;
 
 	private float nextSpawnTimer;
 
@@ -20,30 +22,32 @@ public class BlockSpawnerScript : MonoBehaviour {
 	private bool readyToSpawn = true;
 	private List<BlockData> currentRNGBucket = new();
 
+	private float timeActive = 0;
+
 	// Start is called before the first frame update
 	void Start() {
 		//Call BlockSpawn Methode after time
 		// Invoke(nameof(SpawnBlock), 0 + Random.Range(-spawnTimeVariance, spawnTimeVariance));
 		spawnTimer = new Timer(timeBetweenSpawns, true);
 		nextSpawnTimer = timeBetweenSpawns;
+		
 	}
 
 	private int blockNum = 0;
-	private int spawns = 0;
 
 	private void Update() {
-
+		timeActive += Time.deltaTime;
 		if (Input.GetKey(KeyCode.LeftShift)) {
 			nextSpawnTimer = 1f;
 		}
 		
 		if (spawnTimer && readyToSpawn) {
 			SpawnBlock();
-			spawns++;
 			var spawnTime = nextSpawnTimer;
-			lastSpawnTimer = spawnTime;
+			// lastSpawnTimer = spawnTime;
 			spawnTimer = new Timer(spawnTime);
-			nextSpawnTimer = Mathf.Max(timeBetweenSpawns - 0.05f * spawns, 1f);
+			
+			nextSpawnTimer = Mathf.Max(timeBetweenSpawns - SpawnTimeReduction * Mathf.Floor(timeActive/ReduceSpawnTimeEveryNSeconds), 1f);
 			// Debug.Log("Nextspawntimer: " +nextSpawnTimer);
 		}
 	}

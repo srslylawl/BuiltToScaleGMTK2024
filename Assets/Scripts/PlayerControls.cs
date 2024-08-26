@@ -4,19 +4,10 @@ using UnityEngine;
 
 public class PlayerControls : MonoBehaviour, IGridOccupant {
 	public float movementSpeed = 5f;
-	public float rotationSpeed = 180f;
-	private bool rotatingRight = true;
+	public float moveCooldown = 0.2f;
 
-	private bool rememberSpace = false;
+	private Timer nextMoveTimer;
 
-	// public Transform playerDestinationPoint;
-	private Transform block = null;
-	private Transform holdingBlock;
-	public LayerMask layermask;
-
-	private int[,] playerBlockLayout = new int[7, 7];
-
-	
 	public Vector2Int CurrentPosition { get; set; } //where we actually are on the grid
 
 
@@ -36,8 +27,8 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 		CurrentPosition += direction;
 		StartMoveInterpolation();
 	}
-	
-	
+
+
 	public void OnRegister() {
 		if (!GlobalGrid.InBounds(CurrentPosition)) {
 			Debug.Log("Player is off grid! Game over!");
@@ -60,6 +51,8 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 		if (!GlobalGrid.TryMove(this, Vector2Int.zero)) {
 			Debug.LogException(new Exception("Unable to register player position on spawn - overlaps?"));
 		}
+
+		nextMoveTimer = new Timer(moveCooldown, true);
 	}
 
 	private void StartMoveInterpolation() {
@@ -96,10 +89,6 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 	}
 
 	private void Update() {
-		//Read Inputs in Update
-
-		// bool isRotating = Vector3.Distance(this.transform.eulerAngles, playerDestinationPoint.eulerAngles) <= 0.1;
-
 		HandleHighlighting();
 
 		//Movement interpolation
@@ -108,7 +97,7 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 			bool finished = Math.Abs(interpolationProgress - 1) < 0.00001f;
 			var start = GridToWorldPos(interpolationOrigin);
 			var end = GridToWorldPos(CurrentPosition);
-			
+
 			Shader.SetGlobalVector("_PlayerPos", new Vector4(transform.position.x - 0.5f, transform.position.z - 0.5f, 0, 0));
 
 			if (finished) {
@@ -128,13 +117,9 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 		// bool hasRotationInput = Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.RightShift);
 		Vector2 playerInputAxis = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
 
-		bool hasHorizontalInput = playerInputAxis.x != 0;
-		bool hasVerticalInput = playerInputAxis.y != 0;
-
 		bool isGrabbing = highlightedBlock && Input.GetKey(KeyCode.Space);
 
 		bool cclockWiseInput = Input.GetKeyDown(KeyCode.J) || Input.GetKeyDown(KeyCode.Q);
-
 		bool clockwiseInput = Input.GetKeyDown(KeyCode.K) || Input.GetKeyDown(KeyCode.E);
 
 		bool rotationalInput = cclockWiseInput || clockwiseInput;
@@ -148,14 +133,21 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 			}
 		}
 
-		if (hasHorizontalInput && Input.GetButtonDown("Horizontal")) {
-			// bool clockWise = Math.Abs(playerInputAxis.x - 1) < 0.00001f;
-			var direction = Math.Sign(playerInputAxis.x) * Vector2Int.right;
+		if (nextMoveTimer) {
+			HandleMovement(playerInputAxis, isGrabbing);
+		}
+	}
+
+	private void HandleMovement(Vector2 inputAxis, bool isGrabbing) {
+		bool hasHorizontalInput = inputAxis.x != 0;
+		bool hasVerticalInput = inputAxis.y != 0;
+		
+		if (hasHorizontalInput) {
+			var direction = Math.Sign(inputAxis.x) * Vector2Int.right;
 			if (!isGrabbing) {
-				// RotateCharacter(clockWise);
-				// Forward = 
 				RotateToForwardAxis(direction);
 				if (GlobalGrid.TryMove(this, direction, false)) {
+					nextMoveTimer = new Timer(moveCooldown);
 					return;
 				}
 			}
@@ -163,79 +155,31 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 				//is grabbing
 				List<IGridOccupant> occupants = new() { this, highlightedBlock };
 				if (GlobalGrid.TryMove(occupants, direction, true)) {
+					nextMoveTimer = new Timer(moveCooldown);
 					return;
 				}
-				// if (GlobalGrid.TryRotate(highlightedBlock, CurrentPosition, clockWise)) {
-				// 	RotateCharacter(clockWise);
-				// 	return;
-				// }
 			}
 
-			// var direction = Math.Sign(playerInputAxis.x) * Vector2Int.right;
-			// if (GlobalGrid.TryMove(this, direction, false)) {
-			// 	return;
-			// }
-
-			// if(hasRotationInput && GlobalGrid.GridOccupants.TryGetValue(CurrentPosition + direction, out var occupant) && occupant != this) {
-			// 	if (GlobalGrid.TryRotate(occupant, CurrentPosition, true)) {
-			// 		Debug.Log($"Player rotates: {occupant}.");
-			// 		return;
-			// 	}
-			// }
 		}
 
-		if (hasVerticalInput && Input.GetButtonDown("Vertical")) {
-			var direction = Math.Sign(playerInputAxis.y) * Vector2Int.up;
-			// var direction = Math.Sign(playerInputAxis.y) * Forward;
+		if (hasVerticalInput) {
+			var direction = Math.Sign(inputAxis.y) * Vector2Int.up;
 
 			if (isGrabbing) {
 				List<IGridOccupant> occupants = new() { this, highlightedBlock };
 				if (GlobalGrid.TryMove(occupants, direction, true)) {
+					nextMoveTimer = new Timer(moveCooldown);
 					return;
 				}
 			}
 			else {
-				// direction = Math.Sign(playerInputAxis.y) * Vector2Int.up;
 				RotateToForwardAxis(direction);
 				if (GlobalGrid.TryMove(this, direction, false)) {
+					nextMoveTimer = new Timer(moveCooldown);
 					return;
 				}
 			}
 		}
-
-		//Checking for Block in front and parenting to player
-		// if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space) || rememberSpace) {
-		// 	rememberSpace = false;
-		//
-		// 	//Release Block
-		// 	if (holdingBlock != null) {
-		// 		block.parent.parent = null;
-		// 		holdingBlock.parent = null;
-		// 		holdingBlock = null;
-		//
-		// 		SetLayer(block.parent.gameObject, LayerMask.NameToLayer("Block"));
-		//
-		// 		ResetRotationLayout();
-		//
-		// 		return;
-		// 	}
-		//
-		// 	//Grab Block
-		// 	block = null;
-		// 	block = CheckForBlockAt(this.transform.position + this.transform.forward);
-		// 	if (block != null) {
-		// 		block.parent.parent = this.transform;
-		// 		holdingBlock = block.GetComponentInParent<BlockControls>().blockDestinationPoint;
-		// 		holdingBlock.parent = this.transform;
-		//
-		// 		SetRotationLayout(block.parent);
-		//
-		// 		SetLayer(block.parent.gameObject, LayerMask.NameToLayer("Player"));
-		// 	}
-		// }
-		// else {
-		// 	if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space)) rememberSpace = true;
-		// }
 	}
 
 	private void RotateCharacter(bool clockwise) {
@@ -272,7 +216,7 @@ public class PlayerControls : MonoBehaviour, IGridOccupant {
 		Gizmos.DrawLine(new Vector3(GlobalGrid.BoundsSize, 0, -GlobalGrid.BoundsSize), new Vector3(-GlobalGrid.BoundsSize, 0, -GlobalGrid.BoundsSize));
 
 		//Gizmos.color = new Color(0, 1.0f, 0, 0.5f);
-		
+
 		//render cube for every occupied grid cell
 		// foreach (var (position, value) in GlobalGrid.GridOccupants) {
 		// 	// Gizmos.DrawCube(new Vector3(position.x + 0.5f, 0, position.y + 0.5f), Vector3.one);
